@@ -16,6 +16,7 @@ import Cake_Etab_P
   allow mime "image/png";
   allow mime "image/gif";
   allow mime "application/octet-stream";
+  allow url "https://github.com/grwlf/urweb-etab*"
   library MonadPack.lib
   library Prelude.lib
   library Bootstrap.lib
