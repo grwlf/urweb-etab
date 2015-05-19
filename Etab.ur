@@ -67,6 +67,7 @@ datatype country = Russia | Bulgaia | OtherCountry of string
 datatype city = Moscow | Birsk | UlanUde | Kugesi | Unknown | Ryazan | Rybinsk |
                 Ekaterinburg | Beloretsk | OtherCiry of string
 
+
 con event_details = [
     Start = time
   , Stop = time
@@ -197,8 +198,54 @@ task initialize = fn _ =>
 
 *)
 
+val pb = @@XMLW.push_back_xml
+(* fun ns x m = XMLW.push_back (XMLW.nest x m) *)
+fun xt m =
+  XMLW.push_back (XMLW.nest (fn x=><xml><table class={
+    CSS.list (Bootstrap.bs3_table :: Bootstrap.table_striped :: [])}>{x}</table></xml>) m)
+fun xtrow m = XMLW.push_back (XMLW.nest (fn x=><xml><tr>{x}</tr></xml>) m)
+
+open Prelude
+open Grigorian
+
+fun monthName m =
+  case m of
+    Jan => "Январь" | Feb=> "Февраль"  | Mar=> "Март"  | Apr=> "Апрель"  | May=>
+    "Май" | Jun=> "Июнь"  | Jul=> "Июль"  | Aug=> "Август"  | Sep=> "Сентябрь"
+    | Oct=> "Октябрь"  | Nov=> "Ноябрь"  | Dec => "Декабрь"
+
 fun main {} : transaction page =
   template (
+    x <- XMLW.lift (queryL (SELECT * FROM events));
+
+    xt (
+      let 
+        val year = 2015
+      in
+        forM_ months (fn m =>
+          let
+            val ndays = monthLength (isLeapYear year) m 
+            val days = sequence_ 1 ndays
+          in
+            pb <xml><tr><td colspan={31}><h3>{cdata (monthName m)}</h3></td></tr></xml>;
+            xtrow (
+              forM_ days (fn d =>
+                pb <xml><td>{[d]}</td></xml>
+              );
+              forM_ (sequence_ ndays 31) (fn i =>
+                pb <xml><td>.</td></xml>
+              )
+            )
+          end
+        )
+      end
+    );
+
+
+    (* forM x (fn x => *)
+    (*   return {} *)
+    (* ); *)
+
     return {}
   )
 

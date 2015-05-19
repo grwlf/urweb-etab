@@ -26,6 +26,7 @@ import Cake_Etab_P
   ur (sys "option")
   ur (sys "string")
   ur (sys "char")
+  ur (file "Grigorian.ur")
   ur (file "Etab.ur")
 
 main = writeDefaultMakefiles $ do
