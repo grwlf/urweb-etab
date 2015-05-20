@@ -25,6 +25,7 @@ import Cake_Etab_P
   ur (sys "list")
   ur (sys "option")
   ur (sys "string")
+  ur (sys "datetime")
   ur (sys "char")
   ur (file "Grigorian.ur")
   ur (file "Etab.ur")

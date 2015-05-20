@@ -210,9 +210,9 @@ open Grigorian
 
 fun monthName m =
   case m of
-    Jan => "Январь" | Feb=> "Февраль"  | Mar=> "Март"  | Apr=> "Апрель"  | May=>
-    "Май" | Jun=> "Июнь"  | Jul=> "Июль"  | Aug=> "Август"  | Sep=> "Сентябрь"
-    | Oct=> "Октябрь"  | Nov=> "Ноябрь"  | Dec => "Декабрь"
+    January => "Январь" | February=> "Февраль"  | March=> "Март"  | April=> "Апрель"  | May=>
+    "Май" | June=> "Июнь"  | July=> "Июль"  | August=> "Август"  | September=> "Сентябрь"
+    | October=> "Октябрь"  | November=> "Ноябрь"  | December => "Декабрь"
 
 fun main {} : transaction page =
   template (
