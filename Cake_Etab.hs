@@ -27,7 +27,7 @@ import Cake_Etab_P
   ur (sys "string")
   ur (sys "datetime")
   ur (sys "char")
-  ur (file "Grigorian.ur")
+  ur (file "Gregorian.ur")
   ur (file "Etab.ur")
 
 main = writeDefaultMakefiles $ do

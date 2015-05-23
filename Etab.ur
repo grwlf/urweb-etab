@@ -77,11 +77,13 @@ con event_details = [
   , Kind = serialized eventkind
   ]
 
-table events : ([ Id = int ] ++ event_details)
+con event = [ Id = int ] ++ event_details
+
+
+table events : (event)
   PRIMARY KEY Id
 
 sequence events_gen
-
 
 fun event_insert (e : record event_details) : transaction int =
   i <- nextval events_gen;
@@ -206,17 +208,35 @@ fun xt m =
 fun xtrow m = XMLW.push_back (XMLW.nest (fn x=><xml><tr>{x}</tr></xml>) m)
 
 open Prelude
-open Grigorian
+open Gregorian
+open List
 
 fun monthName m =
   case m of
-    January => "Январь" | February=> "Февраль"  | March=> "Март"  | April=> "Апрель"  | May=>
-    "Май" | June=> "Июнь"  | July=> "Июль"  | August=> "Август"  | September=> "Сентябрь"
-    | October=> "Октябрь"  | November=> "Ноябрь"  | December => "Декабрь"
+    January => "Январь" | February=> "Февраль"  | March=> "Март"  | April=> "Апрель"  |
+    May=> "Май" | June=> "Июнь"  | July=> "Июль"  | August=> "Август"  | September=> "Сентябрь" |
+    October=> "Октябрь"  | November=> "Ноябрь"  | December => "Декабрь"
+
+
+(* monthEvents (es : list event) : list (list event) *)
+
+
+(* fun mapEvents [s ::: Type] (f : int -> event -> s -> s) (s:s) (n:int) (l:list event) : s = *)
+
+fun toMonth t = (fromTime t).Month
+
+con revent = record event
+  
+fun filterMonth (m:month)  (l:list revent) : list revent =
+    filter (fn e => (m >= (toMonth e.Start)) && (toMonth e.Stop) >= m) l
+
+fun splitMonths (l:list revent) : list (list revent) =
+  mp (fn m => filterMonth m l) months
+
 
 fun main {} : transaction page =
   template (
-    x <- XMLW.lift (queryL (SELECT * FROM events));
+    q <- XMLW.lift (queryL1 (SELECT * FROM events AS E ORDER BY E.Start));
 
     xt (
       let 
@@ -227,7 +247,11 @@ fun main {} : transaction page =
             val ndays = monthLength (isLeapYear year) m 
             val days = sequence_ 1 ndays
           in
-            pb <xml><tr><td colspan={31}><h3>{cdata (monthName m)}</h3></td></tr></xml>;
+            pb <xml>
+              <tr><td colspan={31}><h3>{cdata (monthName m)}</h3>
+              {mapX (fn i => <xml>{[i.Caption]}</xml>) (filterMonth m q)}
+              </td></tr>
+            </xml>;
             xtrow (
               forM_ days (fn d =>
                 pb <xml><td>{[d]}</td></xml>
