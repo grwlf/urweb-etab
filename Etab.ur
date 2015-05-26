@@ -251,6 +251,8 @@ task initialize = fn _ =>
 
 *)
 
+fun daysDiff t1 t2 = (((toSeconds t2) - (toSeconds t1)) / (60 * 60 * 24)) + 1
+
 val pb = @@XMLW.push_back_xml
 (* fun ns x m = XMLW.push_back (XMLW.nest x m) *)
 fun xt m =
@@ -346,16 +348,30 @@ fun main {} : transaction page =
                 val l = filterMonth m (getLayer i ls)
               in
                 xtrow (
-                  foldlM_ (fn d es =>
-                    if d <= ndays then
+                  foldlM_ (fn day es =>
+                    let
+                      val d = mkDate' day m year
+                      val eom = mkDate' ndays m year
+                      val som = mkDate' 1 m year
+                    in
+                    if day <= ndays then
                       case es of
                         |e::es => (
-                          if (mkDate' d m year) >= e.Start then
-                            pb <xml><td style={kindStyle (deserialize e.Kind)}>{[e.Id]}</td></xml>;
-                            if (mkDate' d m year) = e.Stop then
+                          if d >= e.Start then
+                            (if d = e.Start || d = som then
+                              pb
+                              <xml>
+                                <td colspan={min (daysDiff d eom) (daysDiff d e.Stop)}
+                                    style={kindStyle (deserialize e.Kind)}>
+                                  {[e.Id]}
+                                </td>
+                              </xml>
+                            else
+                              return {});
+                            (if d = e.Stop then
                               return es
                             else
-                              return (e::es)
+                              return (e::es))
                           else
                             pb <xml><td>.</td></xml>;
                             return (e::es)
@@ -366,6 +382,7 @@ fun main {} : transaction page =
                     else
                       pb <xml><td>x</td></xml> ;
                       return []
+                  end
                   ) l (sequence_ 1 31)
                 )
               end
