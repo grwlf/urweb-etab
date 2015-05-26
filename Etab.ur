@@ -1,3 +1,42 @@
+(*
+ _     _ _
+| |   (_) |__
+| |   | | '_ \
+| |___| | |_) |
+|_____|_|_.__/
+
+*)
+
+
+(* Iterate throw [fst..lst), assume that fst < lst *)
+fun ifor [s:::Type] (f: int -> s -> (s * bool)) (fst:int) (lst:int) (s:s) : s =
+  if (lst > fst) then
+    let 
+      val (s', ex) = f fst s
+    in
+      if ex then s' else ifor f (fst+1) lst s'
+    end
+  else
+    s
+
+fun iwhile [s:::Type] (f: s -> (s * bool)) (s:s) : s =
+  let 
+    val (s', ex) = f s
+  in
+    if ex then s' else iwhile f s'
+  end
+
+
+(*
+ _____                    _       _
+|_   _|__ _ __ ___  _ __ | | __ _| |_ ___
+  | |/ _ \ '_ ` _ \| '_ \| |/ _` | __/ _ \
+  | |  __/ | | | | | |_) | | (_| | ||  __/
+  |_|\___|_| |_| |_| .__/|_|\__,_|\__\___|
+                   |_|
+*)
+
+
 val srcprj = bless "https://github.com/grwlf/urweb-etab"
 
 fun template mb : transaction page =
@@ -79,9 +118,10 @@ con event_details = [
 
 con event = [ Id = int ] ++ event_details
 
-
 table events : (event)
   PRIMARY KEY Id
+
+con event = record event
 
 sequence events_gen
 
@@ -112,6 +152,7 @@ fun event15 d m = fromDatetime 2015 (m-1) d 12 0 0
 task initialize = fn _ =>
   (* Cleanup *)
   dml(DELETE FROM events WHERE Id > 0);
+  setval events_gen 1;
 
   (* State competitions *)
   _ <- state_competition {
@@ -225,40 +266,90 @@ fun monthName m =
 
 fun toMonth t = (fromTime t).Month
 
-con revent = record event
-  
-fun filterMonth (m:month)  (l:list revent) : list revent =
+fun filterMonth (m:month)  (l:list event) : list event =
     filter (fn e => (m >= (toMonth e.Start)) && (toMonth e.Stop) >= m) l
 
-fun splitMonths (l:list revent) : list (list revent) =
+fun splitMonths (l:list event) : list (list event) =
   mp (fn m => filterMonth m l) months
 
+structure LMap = AATreeMap.MkAATreeMap (struct
+  type key = int
+  type item = list event
+end)
+
+type lmap = LMap.t int (list event)
+
+fun splitLayers (l: list event) : lmap =
+  List.foldl (fn e m =>
+    (iwhile (fn (i,m) =>
+      (case (LMap.lookup i m) of
+        |None => ((i,LMap.insert i (e::[]) m), True)
+        |Some [] =>
+          ((i,LMap.insert i (e::[]) m), True)
+        |Some (e'::es') =>
+          (if e'.Stop < e.Start then
+              ((i,LMap.insert i (e::e'::es') m), True)
+            else
+              ((i+1,m), False)
+          )
+      )
+    ) (0,m)).2
+  ) LMap.empty l
+
+fun getLayer i (m:lmap) : list event =
+  case (LMap.lookup i m) of |None => [] | Some x => x
+  
 
 fun main {} : transaction page =
   template (
-    q <- XMLW.lift (queryL1 (SELECT * FROM events AS E ORDER BY E.Start));
+    q <- XMLW.lift (queryL1 (SELECT * FROM events AS E ORDER BY E.Start DESC));
 
     xt (
-      let 
+      let
+        val ls = splitLayers q
+        val nl = LMap.size ls
         val year = 2015
       in
         forM_ months (fn m =>
           let
-            val ndays = monthLength (isLeapYear year) m 
+            val ndays = monthLength (isLeapYear year) m
             val days = sequence_ 1 ndays
           in
             pb <xml>
               <tr><td colspan={31}><h3>{cdata (monthName m)}</h3>
-              {mapX (fn i => <xml>{[i.Caption]}</xml>) (filterMonth m q)}
+              {mapX (fn e => <xml>{[e.Id]}:{[e.Caption]}<br/></xml>) (filterMonth m q)}
               </td></tr>
             </xml>;
-            xtrow (
-              forM_ days (fn d =>
-                pb <xml><td>{[d]}</td></xml>
-              );
-              forM_ (sequence_ ndays 31) (fn i =>
-                pb <xml><td>.</td></xml>
-              )
+
+            forM_ (sequence_ 0 (nl-1)) (fn i =>
+              let
+                val l = filterMonth m (getLayer i ls)
+              in
+                xtrow (
+                  foldlM_ (fn d es =>
+                    case es of
+                      |e::es => (
+                        if d >= datetimeDay e.Start then
+                          pb <xml><td>{[e.Id]}</td></xml>;
+                          if d = datetimeDay e.Stop then
+                            return es
+                          else
+                            return (e::es)
+                        else
+                          pb <xml><td>.</td></xml>;
+                          return (e::es)
+                        )
+                      |[]=> (
+                        pb <xml><td>:</td></xml>;
+                        return [])
+                  ) l days ;
+
+                  forM_ (sequence_ ndays 31) (fn i =>
+                    pb <xml><td>x</td></xml>
+                  )
+                )
+              end
+
             )
           end
         )

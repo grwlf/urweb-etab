@@ -9,7 +9,13 @@ import qualified Cake_Soup as Soup hiding(main)
 import qualified Cake_XMLW as XMLW hiding(main)
 import Cake_Etab_P
 
+bits = rule $ do
+  let bits_c = file "lib/urweb-aatree/lib/lib_bits/src/c/Bits.c"
+  let bits_o = bits_c .= "o"
+  shell [cmd|C_INCLUDE_PATH=$(uwincludedir) $(uwcc) -c -o @(bits_o) $(bits_c)|]
+
 (app,db) = uwapp_postgres (file "Etab.urp") $ do
+  depend bits
   allow mime "text/javascript";
   allow mime "text/css";
   allow mime "image/jpeg";
@@ -22,6 +28,7 @@ import Cake_Etab_P
   library Bootstrap.lib
   library Soup.lib
   library XMLW.lib
+  library (file "lib/urweb-aatree/lib_aatree.urp")
   ur (sys "list")
   ur (sys "option")
   ur (sys "string")
