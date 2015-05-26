@@ -280,21 +280,22 @@ end)
 type lmap = LMap.t int (list event)
 
 fun splitLayers (l: list event) : lmap =
-  List.foldl (fn e m =>
-    (iwhile (fn (i,m) =>
-      (case (LMap.lookup i m) of
-        |None => ((i,LMap.insert i (e::[]) m), True)
-        |Some [] =>
-          ((i,LMap.insert i (e::[]) m), True)
-        |Some (e'::es') =>
-          (if e'.Stop < e.Start then
-              ((i,LMap.insert i (e::e'::es') m), True)
-            else
-              ((i+1,m), False)
-          )
-      )
-    ) (0,m)).2
-  ) LMap.empty l
+  LMap.mapValues (fn x => List.rev x)
+    (List.foldl (fn e m =>
+      (iwhile (fn (i,m) =>
+        (case (LMap.lookup i m) of
+          |None => ((i,LMap.insert i (e::[]) m), True)
+          |Some [] =>
+            ((i,LMap.insert i (e::[]) m), True)
+          |Some (e'::es') =>
+            (if e'.Stop < e.Start then
+                ((i,LMap.insert i (e::e'::es') m), True)
+              else
+                ((i+1,m), False)
+            )
+        )
+      ) (0,m)).2
+    ) LMap.empty l)
 
 fun getLayer i (m:lmap) : list event =
   case (LMap.lookup i m) of |None => [] | Some x => x
