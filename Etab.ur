@@ -9,13 +9,9 @@
 
 
 (* Iterate throw [fst..lst), assume that fst < lst *)
-fun ifor [s:::Type] (f: int -> s -> (s * bool)) (fst:int) (lst:int) (s:s) : s =
-  if (lst > fst) then
-    let 
-      val (s', ex) = f fst s
-    in
-      if ex then s' else ifor f (fst+1) lst s'
-    end
+fun ifor [s:::Type] (f: int -> s -> s) (fst:int) (lst:int) (s:s) : s =
+  if (fst < lst) then
+    ifor f (fst+1) lst (f fst s)
   else
     s
 
@@ -25,7 +21,6 @@ fun iwhile [s:::Type] (f: s -> (s * bool)) (s:s) : s =
   in
     if ex then s' else iwhile f s'
   end
-
 
 (*
  _____                    _       _
@@ -101,6 +96,13 @@ fun template mb : transaction page =
 
 datatype eventkind = StateTournament | StateCup | StateCompetition | ZoneCompetition
 
+fun kindStyle (e:eventkind) : css_style =
+  case e of
+    |StateTournament => STYLE "background:#aa0000"
+    |StateCup => STYLE "background:#bb0000"
+    |StateCompetition => STYLE "background:#cc0000"
+    |ZoneCompetition => STYLE "background:#dd0000"
+
 datatype country = Russia | Bulgaia | OtherCountry of string
 
 datatype city = Moscow | Birsk | UlanUde | Kugesi | Unknown | Ryazan | Rybinsk |
@@ -147,7 +149,9 @@ fun zone_competition e : transaction int =
     Country = serialize Russia,
     Kind = serialize ZoneCompetition})
 
-fun event15 d m = fromDatetime 2015 (m-1) d 12 0 0
+fun mkDate d m y = fromDatetime y (m-1) d 12 0 0
+fun mkDate' d m y = fromDatetime y (Datetime.monthToInt m) d 12 0 0
+fun mkDate15 d m = mkDate d m 2015
 
 task initialize = fn _ =>
   (* Cleanup *)
@@ -156,78 +160,84 @@ task initialize = fn _ =>
 
   (* State competitions *)
   _ <- state_competition {
-           Start = event15 22 07
-         , Stop =  event15 26 07
+           Start = mkDate15 22 07
+         , Stop =  mkDate15 26 07
          , Caption = "Стрелы Байкала"
          , City = serialize UlanUde };
 
   _ <- state_competition {
-           Start = event15 21 08
-         , Stop =  event15 24 08
+           Start = mkDate15 21 08
+         , Stop =  mkDate15 24 08
          , Caption = "Турнир Палагина"
          , City = serialize Kugesi };
 
   _ <- state_competition {
-           Start = event15 20 11
-         , Stop =  event15 25 11
+           Start = mkDate15 20 11
+         , Stop =  mkDate15 25 11
          , Caption = "Надежды России"
          , City = serialize Unknown };
 
   _ <- state_competition {
-           Start = event15 03 12
-         , Stop =  event15 07 12
+           Start = mkDate15 03 12
+         , Stop =  mkDate15 07 12
          , Caption = "Турнир на приз Малахова"
          , City = serialize Ryazan };
 
   _ <- state_competition {
-           Start = event15 23 12
-         , Stop =  event15 27 12
+           Start = mkDate15 23 12
+         , Stop =  mkDate15 27 12
          , Caption = "Памяти ЗТР Устинова-Иванова"
          , City = serialize Rybinsk };
 
   (* Zone *)
   _ <- zone_competition {
-           Start = event15 20 02
-         , Stop =  event15 22 02
+           Start = mkDate15 20 02
+         , Stop =  mkDate15 22 02
          , Caption = "Уральский ФО, Свердловская область"
          , City = serialize Ekaterinburg };
 
   _ <- zone_competition {
-           Start = event15 03 07
-         , Stop =  event15 05 07
+           Start = mkDate15 03 07
+         , Stop =  mkDate15 05 07
          , Caption = "Уральский ФО, Свердловская область"
          , City = serialize Ekaterinburg };
 
   _ <- zone_competition {
-           Start = event15 15 07
-         , Stop =  event15 20 07
+           Start = mkDate15 15 07
+         , Stop =  mkDate15 20 07
          , Caption = "Центральный ФО"
          , City = serialize Ryazan };
 
   _ <- zone_competition {
-           Start = event15 12 12
-         , Stop =  event15 15 12
+           Start = mkDate15 12 12
+         , Stop =  mkDate15 15 12
          , Caption = "Сибирский ФО, Дальневосточный ФО"
          , City = serialize Unknown };
 
   (* Cup *)
 
   _ <- state_cup {
-           Start = event15 24 09
-         , Stop =  event15 29 09
+           Start = mkDate15 24 09
+         , Stop =  mkDate15 29 09
          , Caption = "Кубок России"
          , City = serialize Unknown };
 
   _ <- state_cup {
-           Start = event15 03 12
-         , Stop =  event15 07 12
+           Start = mkDate15 03 12
+         , Stop =  mkDate15 07 12
          , Caption = "Этап 1, сезон 2015-2016"
          , City = serialize Unknown };
 
   _ <- state_cup {
-           Start = event15 17 12
-         , Stop =  event15 21 12
+           Start = mkDate15 17 12
+         , Stop =  mkDate15 21 12
          , Caption = "Этап 2, сезон 2015-2016"
+         , City = serialize Beloretsk };
+
+  _ <- state_cup {
+           Start = mkDate15 01 03
+         , Stop =  mkDate15 20 04
+         , Caption = "TESTEVENT1"
          , City = serialize Beloretsk };
   return {}
 
@@ -322,35 +332,43 @@ fun main {} : transaction page =
               </td></tr>
             </xml>;
 
+            xtrow (
+              forM_ (sequence_ 1 31) (fn i =>
+                if i <= ndays then
+                  pb <xml><td>{[i]}</td></xml>
+                else
+                  pb <xml><td>x</td></xml>
+              )
+            );
+
             forM_ (sequence_ 0 (nl-1)) (fn i =>
               let
                 val l = filterMonth m (getLayer i ls)
               in
                 xtrow (
                   foldlM_ (fn d es =>
-                    case es of
-                      |e::es => (
-                        if d >= datetimeDay e.Start then
-                          pb <xml><td>{[e.Id]}</td></xml>;
-                          if d = datetimeDay e.Stop then
-                            return es
+                    if d <= ndays then
+                      case es of
+                        |e::es => (
+                          if (mkDate' d m year) >= e.Start then
+                            pb <xml><td style={kindStyle (deserialize e.Kind)}>{[e.Id]}</td></xml>;
+                            if (mkDate' d m year) = e.Stop then
+                              return es
+                            else
+                              return (e::es)
                           else
+                            pb <xml><td>.</td></xml>;
                             return (e::es)
-                        else
-                          pb <xml><td>.</td></xml>;
-                          return (e::es)
-                        )
-                      |[]=> (
-                        pb <xml><td>:</td></xml>;
-                        return [])
-                  ) l days ;
-
-                  forM_ (sequence_ ndays 31) (fn i =>
-                    pb <xml><td>x</td></xml>
-                  )
+                          )
+                        |[]=> (
+                          pb <xml><td>:</td></xml>;
+                          return [])
+                    else
+                      pb <xml><td>x</td></xml> ;
+                      return []
+                  ) l (sequence_ 1 31)
                 )
               end
-
             )
           end
         )
