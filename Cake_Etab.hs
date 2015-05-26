@@ -29,6 +29,7 @@ bits = rule $ do
   library Soup.lib
   library XMLW.lib
   library (file "lib/urweb-aatree/lib_aatree.urp")
+  embed (file "Etab.css")
   ur (sys "list")
   ur (sys "option")
   ur (sys "string")

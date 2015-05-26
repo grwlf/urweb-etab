@@ -39,7 +39,8 @@ fun template mb : transaction page =
   Uru.run (
   JQuery.add (
   Bootstrap.add (
-  Soup.narrow (fn nar =>
+  Soup.layout {Width=1000} (fn nar =>
+  Uru.withStylesheet (Etab_css.url) (
   Uru.withHeader
   <xml>
     <title>Event table</title>
@@ -81,7 +82,7 @@ fun template mb : transaction page =
 
     </xml>
 
-    ))))))
+    )))))))
   where
   end
 
@@ -362,8 +363,9 @@ fun main {} : transaction page =
                               pb
                               <xml>
                                 <td colspan={min (daysDiff d eom) (daysDiff d e.Stop)}
-                                    style={kindStyle (deserialize e.Kind)}>
-                                  {[e.Id]}
+                                    style={kindStyle (deserialize e.Kind)}
+                                >
+                                  {[e.Caption]}
                                 </td>
                               </xml>
                             else
