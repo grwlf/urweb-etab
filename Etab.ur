@@ -263,7 +263,6 @@ fun xtrow m = XMLW.push_back (XMLW.nest (fn x=><xml><tr>{x}</tr></xml>) m)
 
 open Prelude
 open Gregorian
-open List
 
 fun monthName m =
   case m of
@@ -280,10 +279,10 @@ fun monthName m =
 fun toMonth t = (fromTime t).Month
 
 fun filterMonth (m:month)  (l:list event) : list event =
-    filter (fn e => (m >= (toMonth e.Start)) && (toMonth e.Stop) >= m) l
+    List.filter (fn e => (m >= (toMonth e.Start)) && (toMonth e.Stop) >= m) l
 
 fun splitMonths (l:list event) : list (list event) =
-  mp (fn m => filterMonth m l) months
+  List.mp (fn m => filterMonth m l) months
 
 structure LMap = AATreeMap.MkAATreeMap (struct
   type key = int
@@ -314,6 +313,13 @@ fun getLayer i (m:lmap) : list event =
   case (LMap.lookup i m) of |None => [] | Some x => x
   
 
+structure B = Bootstrap
+val data = data_attr data_kind
+val aria = data_attr aria_kind
+val cl = CSS.list
+val btn_prim = cl (B.btn :: B.btn_primary :: [])
+val btn_def = cl (B.btn :: B.btn_default :: [])
+
 fun main {} : transaction page =
   template (
     q <- XMLW.lift (queryL1 (SELECT * FROM events AS E ORDER BY E.Start DESC));
@@ -331,7 +337,7 @@ fun main {} : transaction page =
           in
             pb <xml>
               <tr><td colspan={31}><h3>{cdata (monthName m)}</h3>
-              {mapX (fn e => <xml>{[e.Id]}:{[e.Caption]}<br/></xml>) (filterMonth m q)}
+              {List.mapX (fn e => <xml>{[e.Id]}:{[e.Caption]}<br/></xml>) (filterMonth m q)}
               </td></tr>
             </xml>;
 
@@ -360,12 +366,37 @@ fun main {} : transaction page =
                         |e::es => (
                           if d >= e.Start then
                             (if d = e.Start || d = som then
+
+                              x <- XMLW.lift fresh;
+                              xs <- return (Basis.show x);
+
                               pb
                               <xml>
                                 <td colspan={min (daysDiff d eom) (daysDiff d e.Stop)}
                                     style={kindStyle (deserialize e.Kind)}
                                 >
-                                  {[e.Caption]}
+
+                                  <div class={cl (B.modal :: B.fade :: [])} id={x} role="dialog" data={data_attrs (aria "labelledby" xs) (aria "hidden" "true")}>
+                                    <div class={B.modal_dialog}>
+                                      <div class={B.modal_content}>
+                                        <div class={B.modal_header}>
+                                          <a role="button" class={B.close} data={data_attrs (data "dismiss" "modal") (aria "hidden" "true")} link={main {}}>×</a>
+                                          <h4 class={B.modal_title}>Modal title</h4>
+                                        </div>
+                                        <div class={B.modal_body}>
+                                          <h3>Modal Body</h3>
+                                        </div>
+                                        <div class={B.modal_footer}>
+                                          <a role="button" class={btn_def} data={data "dismiss" "modal"} link={main {}}>Close</a>
+                                          <a role="button" class={btn_prim} link={main {}}>Save changes</a>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  <div data={data_attrs (data "toggle" "modal") (data "target" ("#" ^ (Basis.show x)))}>
+                                    {[e.Caption]}
+                                  </div>
                                 </td>
                               </xml>
                             else
