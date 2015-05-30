@@ -7,6 +7,8 @@
 
 *)
 
+open HTML5Tags
+open BootstrapStyles
 
 (* Iterate throw [fst..lst), assume that fst < lst *)
 fun ifor [s:::Type] (f: int -> s -> s) (fst:int) (lst:int) (s:s) : s =
@@ -61,11 +63,11 @@ fun template mb : transaction page =
       {nar.Footer
       <xml>
         <hr/>
-        <p class={Bootstrap.text_muted}>
+        <p class="text-muted">
           The site is written in <a href={bless "http://impredicative.com/ur/"}>Ur/Web</a>,
           the general-purpose typed functional language.
         </p>
-        <p class={Bootstrap.text_muted}>
+        <p class="text-muted">
         <ul style="padding-left: 0px; margin-top: 20px; color: #999;">
           {Soup.footer_doc_links (
           <xml><a href={srcprj}>Sources</a></xml> ::
@@ -95,20 +97,43 @@ fun template mb : transaction page =
 
 *)
 
-datatype eventkind = StateTournament | StateCup | StateCompetition | ZoneCompetition
+datatype lang = Ru
+
+datatype eventkind = StateTournament | StateCup | StateCompetition | ZoneCompetition | LocalCompetition
 
 fun kindStyle (e:eventkind) : css_style =
   case e of
-    |StateTournament => STYLE "background:#aa0000"
-    |StateCup => STYLE "background:#bb0000"
-    |StateCompetition => STYLE "background:#cc0000"
-    |ZoneCompetition => STYLE "background:#dd0000"
+    |StateTournament => STYLE "background:#FFEB99"
+    |StateCup => STYLE "background:#FF9900"
+    |StateCompetition => STYLE "background:#FF9900"
+    |ZoneCompetition => STYLE "background:#FF9900"
+    |LocalCompetition => STYLE "background:#FFFFA3"
+
+fun kindName_ru (e:eventkind) : (string*string) =
+  case e of
+    |StateTournament => ("ЧР", "Чемпионат России")
+    |StateCup =>        ("КР", "Кубок России")
+    |StateCompetition => ("ВС", "Всероссийские соревнования")
+    |ZoneCompetition => ("ЗС", "Зональные соревнования")
+    |LocalCompetition => ("ЛС", "Локальные соревнования")
 
 datatype country = Russia | Bulgaia | OtherCountry of string
 
 datatype city = Moscow | Birsk | UlanUde | Kugesi | Unknown | Ryazan | Rybinsk |
                 Ekaterinburg | Beloretsk | OtherCiry of string
 
+fun cityName_ru c : string =
+  case c of
+    |Moscow => "Москва"
+    |Birsk => "Бирск"
+    |UlanUde => "Улан-Удэ"
+    |Kugesi => "Кугести"
+    |Unknown => "По назначению"
+    |Ryazan => "Рязань"
+    |Rybinsk => "Рыбинск"
+    |Ekaterinburg => "Екатеринбург"
+    |Beloretsk => "Белорецк"
+    |OtherCiry x => x
 
 con event_details = [
     Start = time
@@ -117,7 +142,12 @@ con event_details = [
   , Country = serialized country
   , City = serialized city
   , Kind = serialized eventkind
+  , Description  = string
   ]
+
+fun eventCity [t] [t~[City]] (e : record (t ++ [City = serialized city])) : city = deserialize e.City
+fun eventKind [t] [t~[Kind]] (e : record (t ++ [Kind = serialized eventkind])) : eventkind = deserialize e.Kind
+fun eventCountry [t] [t~[Country]] (e : record (t ++ [Country = serialized country])) : country = deserialize e.Country
 
 con event = [ Id = int ] ++ event_details
 
@@ -128,12 +158,16 @@ con event = record event
 
 sequence events_gen
 
-fun event_insert (e : record event_details) : transaction int =
+fun event_insert e' : transaction int =
+  let 
+    val e : record event_details = e' ++ { Description = "Description"}
+  in
   i <- nextval events_gen;
-  dml(INSERT INTO events(Id, Start, Stop, Caption, Country, City, Kind)
+  dml(INSERT INTO events(Id, Start, Stop, Caption, Country, City, Kind, Description)
       VALUES({[i]}, {[e.Start]}, {[e.Stop]}, {[e.Caption]}, {[e.Country]},
-             {[e.City]}, {[e.Kind]}));
+             {[e.City]}, {[e.Kind]}, {[e.Description]}));
   return i
+  end
 
 fun state_cup e : transaction int =
   event_insert (e ++ {
@@ -234,12 +268,6 @@ task initialize = fn _ =>
          , Stop =  mkDate15 21 12
          , Caption = "Этап 2, сезон 2015-2016"
          , City = serialize Beloretsk };
-
-  _ <- state_cup {
-           Start = mkDate15 01 03
-         , Stop =  mkDate15 20 04
-         , Caption = "TESTEVENT1"
-         , City = serialize Beloretsk };
   return {}
 
 
@@ -256,9 +284,7 @@ fun daysDiff t1 t2 = (((toSeconds t2) - (toSeconds t1)) / (60 * 60 * 24)) + 1
 
 val pb = @@XMLW.push_back_xml
 (* fun ns x m = XMLW.push_back (XMLW.nest x m) *)
-fun xt m =
-  XMLW.push_back (XMLW.nest (fn x=><xml><table class={
-    CSS.list (Bootstrap.bs3_table :: Bootstrap.table_striped :: [])}>{x}</table></xml>) m)
+fun xt m = XMLW.push_back (XMLW.nest (fn x=><xml><table class="bs3-table table-striped">{x}</table></xml>) m)
 fun xtrow m = XMLW.push_back (XMLW.nest (fn x=><xml><tr>{x}</tr></xml>) m)
 
 open Prelude
@@ -269,12 +295,6 @@ fun monthName m =
     January => "Январь" | February=> "Февраль"  | March=> "Март"  | April=> "Апрель"  |
     May=> "Май" | June=> "Июнь"  | July=> "Июль"  | August=> "Август"  | September=> "Сентябрь" |
     October=> "Октябрь"  | November=> "Ноябрь"  | December => "Декабрь"
-
-
-(* monthEvents (es : list event) : list (list event) *)
-
-
-(* fun mapEvents [s ::: Type] (f : int -> event -> s -> s) (s:s) (n:int) (l:list event) : s = *)
 
 fun toMonth t = (fromTime t).Month
 
@@ -311,120 +331,136 @@ fun splitLayers (l: list event) : lmap =
 
 fun getLayer i (m:lmap) : list event =
   case (LMap.lookup i m) of |None => [] | Some x => x
-  
 
-structure B = Bootstrap
-val data = data_attr data_kind
-val aria = data_attr aria_kind
-val cl = CSS.list
-val btn_prim = cl (B.btn :: B.btn_primary :: [])
-val btn_def = cl (B.btn :: B.btn_default :: [])
+fun tooltip e : xbody =
+  let
+  in
+  <xml>
+  <strong> {[(kindName_ru (eventKind e)).2]}</strong> <br/>
+  <strong>Город:</strong> {[cityName_ru (eventCity e)]}<br/>
+  <br/>
+  {[e.Description]}
+  </xml>
+  end
+
+fun details e : transaction xbody =
+  let
+    val (abbr,name) = kindName_ru (eventKind e)
+    val city = cityName_ru (eventCity e)
+  in
+  i <- fresh ; 
+  Soup.modal {
+    Title=<xml><h3>{cdata e.Caption}</h3></xml>
+      , Body = <xml>{cdata e.Description}</xml>
+      , Footer = <xml></xml>
+      , Placeholder = <xml>
+        <div
+          style="cursor:pointer"
+          data-html="true"
+          id={i}
+          onmouseover={fn _ => Bootstrap.tooltip_xshow i (tooltip e)}
+        >
+          {cdata abbr}:{cdata city}
+        </div>
+      </xml>
+  }
+  end
 
 fun main {} : transaction page =
   template (
     q <- XMLW.lift (queryL1 (SELECT * FROM events AS E ORDER BY E.Start DESC));
+    let
+      val year = 2015
+      val ls = splitLayers q
+      val nl = LMap.size ls
+    in
+
+    i <- XMLW.lift fresh;
+
+    pb <xml>
+    <h1 data-html="true" id={i} onmouseover={fn _ => Bootstrap.tooltip_xshow i <xml>Haha<b>hah</b>aha</xml>}>
+      Календарный план соревнований по стрельбе из лука на {[year]} год</h1>
+    </xml>;
 
     xt (
-      let
-        val ls = splitLayers q
-        val nl = LMap.size ls
-        val year = 2015
-      in
-        forM_ months (fn m =>
-          let
-            val ndays = monthLength (isLeapYear year) m
-            val days = sequence_ 1 ndays
-          in
-            pb <xml>
-              <tr><td colspan={31}><h3>{cdata (monthName m)}</h3>
-              {List.mapX (fn e => <xml>{[e.Id]}:{[e.Caption]}<br/></xml>) (filterMonth m q)}
-              </td></tr>
-            </xml>;
+      forM_ months (fn m =>
+        let
+          val ndays = monthLength (isLeapYear year) m
+          val days = sequence_ 1 ndays
+          val border = STYLE "border:1px solid #ddd"
+        in
+          pb <xml>
+            <tr><td colspan={31}><h3>{cdata (monthName m)}</h3>
+            (* {List.mapX (fn e => <xml>{[e.Id]}:{[e.Caption]}<br/></xml>) (filterMonth m q)} *)
+            </td></tr>
+          </xml>;
 
-            xtrow (
-              forM_ (sequence_ 1 31) (fn i =>
-                if i <= ndays then
-                  pb <xml><td>{[i]}</td></xml>
-                else
-                  pb <xml><td>x</td></xml>
-              )
-            );
+          xtrow (
+            forM_ (sequence_ 1 31) (fn i =>
+              if i <= ndays then
+                pb <xml><td class="text-muted" style={border}>{[i]}</td></xml>
+              else
+                pb <xml><td style={border}> </td></xml>
+            )
+          );
 
-            forM_ (sequence_ 0 (nl-1)) (fn i =>
-              let
-                val l = filterMonth m (getLayer i ls)
-              in
-                xtrow (
-                  foldlM_ (fn day es =>
-                    let
-                      val d = mkDate' day m year
-                      val eom = mkDate' ndays m year
-                      val som = mkDate' 1 m year
-                    in
-                    if day <= ndays then
-                      case es of
-                        |e::es => (
-                          if d >= e.Start then
-                            (if d = e.Start || d = som then
-
-                              x <- XMLW.lift fresh;
-                              xs <- return (Basis.show x);
-
+          forM_ (sequence_ 0 (nl-1)) (fn i =>
+            let
+              val l = filterMonth m (getLayer i ls)
+            in
+              xtrow (
+                foldlM_ (fn day es =>
+                  let
+                    val d = mkDate' day m year
+                    val eom = mkDate' ndays m year
+                    val som = mkDate' 1 m year
+                  in
+                  if day <= ndays then
+                    case es of
+                      |e::es => (
+                        if d >= e.Start then
+                          (if d = e.Start || d = som then
+                            let
+                            in
+                              m <- XMLW.lift (details e);
                               pb
                               <xml>
                                 <td colspan={min (daysDiff d eom) (daysDiff d e.Stop)}
                                     style={kindStyle (deserialize e.Kind)}
+                                    data-container="body"
                                 >
-
-                                  <div class={cl (B.modal :: B.fade :: [])} id={x} role="dialog" data={data_attrs (aria "labelledby" xs) (aria "hidden" "true")}>
-                                    <div class={B.modal_dialog}>
-                                      <div class={B.modal_content}>
-                                        <div class={B.modal_header}>
-                                          <a role="button" class={B.close} data={data_attrs (data "dismiss" "modal") (aria "hidden" "true")} link={main {}}>×</a>
-                                          <h4 class={B.modal_title}>Modal title</h4>
-                                        </div>
-                                        <div class={B.modal_body}>
-                                          <h3>Modal Body</h3>
-                                        </div>
-                                        <div class={B.modal_footer}>
-                                          <a role="button" class={btn_def} data={data "dismiss" "modal"} link={main {}}>Close</a>
-                                          <a role="button" class={btn_prim} link={main {}}>Save changes</a>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </div>
-
-                                  <div data={data_attrs (data "toggle" "modal") (data "target" ("#" ^ (Basis.show x)))}>
-                                    {[e.Caption]}
-                                  </div>
+                                  {m}
                                 </td>
                               </xml>
-                            else
-                              return {});
-                            (if d = e.Stop then
-                              return es
-                            else
-                              return (e::es))
+                            end
                           else
-                            pb <xml><td>.</td></xml>;
-                            return (e::es)
-                          )
-                        |[]=> (
-                          pb <xml><td>:</td></xml>;
-                          return [])
-                    else
-                      pb <xml><td>x</td></xml> ;
-                      return []
-                  end
-                  ) l (sequence_ 1 31)
-                )
-              end
-            )
-          end
-        )
-      end
-    );
+                            return {});
+                          (if d = e.Stop then
+                            return es
+                          else
+                            return (e::es))
+                        else
+                          pb <xml><td style={border}>&nbsp;</td></xml>;
+                          return (e::es)
+                        )
+                      |[]=> (
+                        pb <xml><td style={border}>&nbsp;</td></xml>;
+                        return [])
+                  else
+                    pb <xml><td style={border}>&nbsp;</td></xml> ;
+                    return []
+                end
+                ) l (sequence_ 1 31)
+              )
+            end
+          )
+        end
+      );
 
+      pb <xml><tr><td colspan={31}/></tr></xml>
+
+    )
+    end;
 
     (* forM x (fn x => *)
     (*   return {} *)
