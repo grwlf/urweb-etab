@@ -45,6 +45,10 @@ main = writeDefaultMakefiles $ do
     depend db
 
   rule $ do
+    phony "run"
+    shell [cmd|$(app)|]
+
+  rule $ do
     phony "all"
     depend app
 

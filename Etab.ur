@@ -24,6 +24,8 @@ fun iwhile [s:::Type] (f: s -> (s * bool)) (s:s) : s =
     if ex then s' else iwhile f s'
   end
 
+fun daysDiff t1 t2 = (((toSeconds t2) - (toSeconds t1)) / (60 * 60 * 24)) + 1
+
 (*
  _____                    _       _
 |_   _|__ _ __ ___  _ __ | | __ _| |_ ___
@@ -41,7 +43,7 @@ fun template mb : transaction page =
   Uru.run (
   JQuery.add (
   Bootstrap.add (
-  Soup.layout {Width=1000} (fn nar =>
+  Soup.layout {Width=1200} (fn nar =>
   Uru.withStylesheet (Etab_css.url) (
   Uru.withHeader
   <xml>
@@ -149,6 +151,8 @@ fun eventCity [t] [t~[City]] (e : record (t ++ [City = serialized city])) : city
 fun eventKind [t] [t~[Kind]] (e : record (t ++ [Kind = serialized eventkind])) : eventkind = deserialize e.Kind
 fun eventCountry [t] [t~[Country]] (e : record (t ++ [Country = serialized country])) : country = deserialize e.Country
 
+fun eventLength [t] [t~[Start,Stop]] (e : record (t ++ [Start = time, Stop = time])) : int = daysDiff e.Start e.Stop
+
 con event = [ Id = int ] ++ event_details
 
 table events : (event)
@@ -183,6 +187,11 @@ fun zone_competition e : transaction int =
   event_insert (e ++ {
     Country = serialize Russia,
     Kind = serialize ZoneCompetition})
+
+fun local_competition e : transaction int =
+  event_insert (e ++ {
+    Country = serialize Russia,
+    Kind = serialize LocalCompetition})
 
 fun mkDate d m y = fromDatetime y (m-1) d 12 0 0
 fun mkDate' d m y = fromDatetime y (Datetime.monthToInt m) d 12 0 0
@@ -268,6 +277,13 @@ task initialize = fn _ =>
          , Stop =  mkDate15 21 12
          , Caption = "Этап 2, сезон 2015-2016"
          , City = serialize Beloretsk };
+
+  (* Local *)
+  _ <- local_competition 
+         { Start = mkDate15 31 05
+         , Stop =  mkDate15 31 05
+         , Caption = "Чемпионат Московской области"
+         , City = serialize Moscow };
   return {}
 
 
@@ -279,8 +295,6 @@ task initialize = fn _ =>
 |_|  |_|\__,_|_|_| |_|
 
 *)
-
-fun daysDiff t1 t2 = (((toSeconds t2) - (toSeconds t1)) / (60 * 60 * 24)) + 1
 
 val pb = @@XMLW.push_back_xml
 (* fun ns x m = XMLW.push_back (XMLW.nest x m) *)
@@ -353,14 +367,18 @@ fun details e : transaction xbody =
     Title=<xml><h3>{cdata e.Caption}</h3></xml>
       , Body = <xml>{cdata e.Description}</xml>
       , Footer = <xml></xml>
-      , Placeholder = <xml>
+      , Placeholder = 
+      <xml>
         <div
-          style="cursor:pointer"
           data-html="true"
           id={i}
           onmouseover={fn _ => Bootstrap.tooltip_xshow i (tooltip e)}
         >
-          {cdata abbr}:{cdata city}
+        {if eventLength e <= 3 then
+          (cdata abbr)
+         else
+          (cdata (abbr^":"^city))
+        }
         </div>
       </xml>
   }

@@ -4,7 +4,13 @@ table {
 }
 td {
     width:3.2%;
-    overflow: hidden;
-    text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+td div {
+  cursor:pointer; overflow:hidden; text-overflow:ellipsis
+}
+
+div.tooltip-inner {
+    max-width: 350px;
 }
