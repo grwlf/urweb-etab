@@ -101,28 +101,44 @@ fun template mb : transaction page =
 
 datatype lang = Ru
 
-datatype eventkind = StateTournament | StateCup | StateCompetition | ZoneCompetition | LocalCompetition
+datatype age = Youth | Adult
+
+datatype eventkind = StateTournament of age | StateCup | StateCompetition | ZoneCompetition
+                     | LocalCompetition | LocalTournament of age
 
 fun kindStyle (e:eventkind) : css_style =
   case e of
-    |StateTournament => STYLE "background:#FFEB99"
+    |StateTournament _ => STYLE "background:#FFEB99"
     |StateCup => STYLE "background:#FF9900"
     |StateCompetition => STYLE "background:#FF9900"
     |ZoneCompetition => STYLE "background:#FF9900"
     |LocalCompetition => STYLE "background:#FFFFA3"
+    |LocalTournament _ => STYLE "background:#FFFFA3"
+
+datatype sport = A3D | Target | Field
+
+fun sportName_ru s : string =
+  case s of
+    |A3D => "3D"
+    |Target => "Таргет"
+    |Field  => "Филд"
 
 fun kindName_ru (e:eventkind) : (string*string) =
   case e of
-    |StateTournament => ("ЧР", "Чемпионат России")
+    |StateTournament Youth => ("ПР", "Первенство России")
+    |StateTournament Adult => ("ЧР", "Чемпионат России")
     |StateCup =>        ("КР", "Кубок России")
     |StateCompetition => ("ВС", "Всероссийские соревнования")
     |ZoneCompetition => ("ЗС", "Зональные соревнования")
     |LocalCompetition => ("ЛС", "Локальные соревнования")
+    |LocalTournament Adult => ("ЛЧ", "Локальный Чемпионат")
+    |LocalTournament Youth => ("ЛП", "Локальное Первенство")
+
 
 datatype country = Russia | Bulgaia | OtherCountry of string
 
 datatype city = Moscow | Birsk | UlanUde | Kugesi | Unknown | Ryazan | Rybinsk |
-                Ekaterinburg | Beloretsk | OtherCiry of string
+                Ekaterinburg | Beloretsk | SPB | OtherCiry of string
 
 fun cityName_ru c : string =
   case c of
@@ -135,6 +151,7 @@ fun cityName_ru c : string =
     |Rybinsk => "Рыбинск"
     |Ekaterinburg => "Екатеринбург"
     |Beloretsk => "Белорецк"
+    |SPB => "Санкт Петербург"
     |OtherCiry x => x
 
 con event_details = [
@@ -145,13 +162,14 @@ con event_details = [
   , City = serialized city
   , Kind = serialized eventkind
   , Description  = string
+  , Sport = serialized sport
   ]
 
 fun eventCity [t] [t~[City]] (e : record (t ++ [City = serialized city])) : city = deserialize e.City
 fun eventKind [t] [t~[Kind]] (e : record (t ++ [Kind = serialized eventkind])) : eventkind = deserialize e.Kind
 fun eventCountry [t] [t~[Country]] (e : record (t ++ [Country = serialized country])) : country = deserialize e.Country
-
 fun eventLength [t] [t~[Start,Stop]] (e : record (t ++ [Start = time, Stop = time])) : int = daysDiff e.Start e.Stop
+fun eventSport [t] [t~[Sport]] (e : record (t ++ [Sport = serialized sport])) : sport = deserialize e.Sport
 
 con event = [ Id = int ] ++ event_details
 
@@ -164,12 +182,12 @@ sequence events_gen
 
 fun event_insert e' : transaction int =
   let 
-    val e : record event_details = e' ++ { Description = "Description"}
+    val e : record event_details = e' ++ { Description = "Description", Sport = serialize Target }
   in
   i <- nextval events_gen;
-  dml(INSERT INTO events(Id, Start, Stop, Caption, Country, City, Kind, Description)
+  dml(INSERT INTO events(Id, Start, Stop, Caption, Country, City, Kind, Description, Sport)
       VALUES({[i]}, {[e.Start]}, {[e.Stop]}, {[e.Caption]}, {[e.Country]},
-             {[e.City]}, {[e.Kind]}, {[e.Description]}));
+             {[e.City]}, {[e.Kind]}, {[e.Description]}, {[e.Sport]}));
   return i
   end
 
@@ -192,6 +210,11 @@ fun local_competition e : transaction int =
   event_insert (e ++ {
     Country = serialize Russia,
     Kind = serialize LocalCompetition})
+
+fun local_tournament e : transaction int =
+  event_insert (e ++ {
+    Country = serialize Russia,
+    Kind = serialize (LocalTournament Adult)})
 
 fun mkDate d m y = fromDatetime y (m-1) d 12 0 0
 fun mkDate' d m y = fromDatetime y (Datetime.monthToInt m) d 12 0 0
@@ -279,11 +302,12 @@ task initialize = fn _ =>
          , City = serialize Beloretsk };
 
   (* Local *)
-  _ <- local_competition 
+  _ <- local_tournament
          { Start = mkDate15 31 05
          , Stop =  mkDate15 31 05
          , Caption = "Чемпионат Московской области"
          , City = serialize Moscow };
+
   return {}
 
 
