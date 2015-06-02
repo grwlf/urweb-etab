@@ -35,7 +35,6 @@ fun daysDiff t1 t2 = (((toSeconds t2) - (toSeconds t1)) / (60 * 60 * 24)) + 1
                    |_|
 *)
 
-
 val srcprj = bless "https://github.com/grwlf/urweb-etab"
 
 fun template mb : transaction page =
@@ -138,7 +137,8 @@ fun kindName_ru (e:eventkind) : (string*string) =
 datatype country = Russia | Bulgaia | OtherCountry of string
 
 datatype city = Moscow | Birsk | UlanUde | Kugesi | Unknown | Ryazan | Rybinsk |
-                Ekaterinburg | Beloretsk | SPB | OtherCiry of string
+                Ekaterinburg | Beloretsk | SPB | VelikieLuki | Chita | Taganrog |
+                Cheboxary | OtherCiry of string
 
 fun cityName_ru c : string =
   case c of
@@ -146,12 +146,16 @@ fun cityName_ru c : string =
     |Birsk => "Бирск"
     |UlanUde => "Улан-Удэ"
     |Kugesi => "Кугести"
-    |Unknown => "По назначению"
     |Ryazan => "Рязань"
     |Rybinsk => "Рыбинск"
     |Ekaterinburg => "Екатеринбург"
     |Beloretsk => "Белорецк"
     |SPB => "Санкт Петербург"
+    |VelikieLuki => "Великие Луки"
+    |Chita => "Чита"
+    |Taganrog => "Таганрог"
+    |Cheboxary => "Чебоксары"
+    |Unknown => "По назначению"
     |OtherCiry x => x
 
 con event_details = [
@@ -196,6 +200,16 @@ fun state_cup e : transaction int =
     Country = serialize Russia,
     Kind = serialize StateCup})
 
+fun state_tournament_adult e : transaction int =
+  event_insert (e ++ {
+    Country = serialize Russia,
+    Kind = serialize (StateTournament Adult)})
+
+fun state_tournament_youth e : transaction int =
+  event_insert (e ++ {
+    Country = serialize Russia,
+    Kind = serialize (StateTournament Youth)})
+
 fun state_competition e : transaction int =
   event_insert (e ++ {
     Country = serialize Russia,
@@ -224,6 +238,45 @@ task initialize = fn _ =>
   (* Cleanup *)
   dml(DELETE FROM events WHERE Id > 0);
   setval events_gen 1;
+
+  (* State tournaments (Adult) *)
+  _ <- state_tournament_adult {
+           Start = mkDate15 01 02
+         , Stop =  mkDate15 06 02
+         , Caption = ""
+         , City = serialize VelikieLuki };
+
+  _ <- state_tournament_adult {
+           Start = mkDate15 25 06
+         , Stop =  mkDate15 30 06
+         , Caption = ""
+         , City = serialize Unknown };
+
+  _ <- state_tournament_adult {
+           Start = mkDate15 18 08
+         , Stop =  mkDate15 24 08
+         , Caption = ""
+         , City = serialize Chita };
+
+  (* State tournaments (Youth) *)
+
+  _ <- state_tournament_youth {
+           Start = mkDate15 06 02
+         , Stop =  mkDate15 11 02
+         , Caption = ""
+         , City = serialize VelikieLuki };
+
+  _ <- state_tournament_youth {
+           Start = mkDate15 25 04
+         , Stop =  mkDate15 30 04
+         , Caption = ""
+         , City = serialize Unknown };
+
+  _ <- state_tournament_youth {
+           Start = mkDate15 10 08
+         , Stop =  mkDate15 16 08
+         , Caption = ""
+         , City = serialize Cheboxary };
 
   (* State competitions *)
   _ <- state_competition {
@@ -282,6 +335,18 @@ task initialize = fn _ =>
          , City = serialize Unknown };
 
   (* Cup *)
+
+  _ <- state_cup {
+           Start = mkDate15 27 01
+         , Stop =  mkDate15 31 01
+         , Caption = ""
+         , City = serialize VelikieLuki };
+
+  _ <- state_cup {
+           Start = mkDate15 19 04
+         , Stop =  mkDate15 24 04
+         , Caption = ""
+         , City = serialize Taganrog };
 
   _ <- state_cup {
            Start = mkDate15 24 09
@@ -370,11 +435,18 @@ fun splitLayers (l: list event) : lmap =
 fun getLayer i (m:lmap) : list event =
   case (LMap.lookup i m) of |None => [] | Some x => x
 
+fun caption e : string = 
+  let
+    val k = (kindName_ru (eventKind e)).2
+  in
+    if (strlen e.Caption) > 0 then e.Caption ^ " (" ^ k ^ ")" else k
+  end
+
 fun tooltip e : xbody =
   let
   in
   <xml>
-  <strong> {[(kindName_ru (eventKind e)).2]}</strong> <br/>
+  <strong>{[caption e]}</strong> <br/>
   <strong>Город:</strong> {[cityName_ru (eventCity e)]}<br/>
   <br/>
   {[e.Description]}
@@ -388,7 +460,7 @@ fun details e : transaction xbody =
   in
   i <- fresh ; 
   Soup.modal {
-    Title=<xml><h3>{cdata e.Caption}</h3></xml>
+    Title=<xml><h3>{[caption e]}</h3></xml>
       , Body = <xml>{cdata e.Description}</xml>
       , Footer = <xml></xml>
       , Placeholder = 

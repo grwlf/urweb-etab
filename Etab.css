@@ -13,4 +13,5 @@ td div {
 
 div.tooltip-inner {
     max-width: 350px;
+    white-space:normal;
 }
