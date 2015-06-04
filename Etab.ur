@@ -7,6 +7,8 @@
 
 *)
 
+open Prelude
+open Gregorian
 open HTML5Tags
 open BootstrapStyles
 
@@ -37,12 +39,12 @@ fun daysDiff t1 t2 = (((toSeconds t2) - (toSeconds t1)) / (60 * 60 * 24)) + 1
 
 val srcprj = bless "https://github.com/grwlf/urweb-etab"
 
-fun template mb : transaction page =
+fun template_ w links mb : transaction page =
   let
   Uru.run (
   JQuery.add (
   Bootstrap.add (
-  Soup.layout {Width=1200} (fn nar =>
+  Soup.layout {Width=w} (fn nar =>
   Uru.withStylesheet (Etab_css.url) (
   Uru.withHeader
   <xml>
@@ -56,9 +58,7 @@ fun template mb : transaction page =
       {nar.Container
       <xml>
         {Soup.forkme_ribbon srcprj}
-        <div style="text-align:center">
-          {b}
-        </div>
+        {b}
       </xml>}
 
       {nar.Footer
@@ -77,7 +77,7 @@ fun template mb : transaction page =
           <xml><a href={bless "http://github.com/grwlf/urweb-monad-pack"}>MonadPack</a></xml> ::
           <xml><a href={bless "http://github.com/grwlf/urweb-xmlw"}>XMLW</a></xml> ::
           <xml><a href={bless "http://github.com/grwlf/urweb-soup"}>Soup</a></xml> ::
-          []
+          links
           )}
         </ul>
         </p>
@@ -88,6 +88,10 @@ fun template mb : transaction page =
     )))))))
   where
   end
+
+val template = template_ 1200
+
+val template_narrow = template_ 768
 
 (*
  ____        _
@@ -386,12 +390,8 @@ task initialize = fn _ =>
 *)
 
 val pb = @@XMLW.push_back_xml
-(* fun ns x m = XMLW.push_back (XMLW.nest x m) *)
 fun xt m = XMLW.push_back (XMLW.nest (fn x=><xml><table class="bs3-table table-striped">{x}</table></xml>) m)
 fun xtrow m = XMLW.push_back (XMLW.nest (fn x=><xml><tr>{x}</tr></xml>) m)
-
-open Prelude
-open Gregorian
 
 fun monthName m =
   case m of
@@ -480,8 +480,59 @@ fun details e : transaction xbody =
   }
   end
 
-fun main {} : transaction page =
-  template (
+fun links {} =
+  <xml><a href={url (register_user {})}>Зарегистрироваться</a></xml> ::
+  []
+
+and register_user {} : transaction page =
+  let
+    fun register_handler (f:{Email:string, Password:string, Password2:string}) : transaction page =
+      redirect (url (main {}))
+  in
+  template_narrow (links {}) (
+    psw <- XMLW.lift fresh;
+    eml <- XMLW.lift fresh;
+    pb
+    <xml>
+      <h1>Регистрация нового пользователя</h1>
+      <form class={form_horizontal} style="text-align:left">
+
+        <div class="form-group">
+          <label for={eml} class="col-sm-2 control-label">Эл. почта</label>
+          <div class="col-sm-10">
+            <email{#Email} class="form-control" id={eml} placeholder="Email"/>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for={psw} class="col-sm-2 control-label">Пароль</label>
+          <div class="col-sm-10">
+            <password{#Password} class="form-control" id={psw} placeholder="Пароль"/>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="col-sm-2 control-label">Пароль (повтор)</label>
+          <div class="col-sm-10">
+            <password{#Password2} class="form-control" placeholder="Пароль (повтор)"/>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <div class="col-sm-2"/>
+          <div class="col-sm-10">
+          <submit action={register_handler} class="btn btn-default" value="Отправить"/>
+          </div>
+        </div>
+
+      </form>
+    </xml>;
+    return {}
+  )
+  end
+
+and main {} : transaction page =
+  template (links {}) (
     q <- XMLW.lift (queryL1 (SELECT * FROM events AS E ORDER BY E.Start DESC));
     let
       val year = 2015
