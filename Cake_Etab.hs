@@ -7,6 +7,7 @@ import qualified Cake_Prelude as Prelude hiding(main)
 import qualified Cake_MonadPack as MonadPack hiding(main)
 import qualified Cake_Soup as Soup hiding(main)
 import qualified Cake_XMLW as XMLW hiding(main)
+import qualified Cake_Captcha as Captcha hiding(main)
 import Cake_Etab_P
 
 bits = rule $ do
@@ -28,6 +29,7 @@ bits = rule $ do
   library Bootstrap.lib
   library Soup.lib
   library XMLW.lib
+  library Captcha.lib
   library (file "lib/urweb-aatree/lib_aatree.urp")
   embed (file "Etab.css")
   ur (sys "list")
