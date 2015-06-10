@@ -485,10 +485,11 @@ fun links {} =
   <xml><a href={url (register_user {})}>Зарегистрироваться</a></xml> ::
   []
 
-and register_user {} = register_user_ "" {UName="", Email="", Password="", Password2="", Capcheck=""}
-
-and register_user_ err f : transaction page =
+and register_user {} = 
   let
+    register_user_ "" {UName="", Email="", Password="", Password2="", Capcheck=""}
+  where
+
     fun register_handler (cid:int) (f:{UName: string, Email:string, Password:string,
                              Password2:string, Capcheck:string}) : transaction page =
       capt_ok <- Captcha.check_free f.Capcheck cid;
@@ -500,70 +501,74 @@ and register_user_ err f : transaction page =
       case e of
         | Error.ERight {} => redirect (url (register_user {}))
         | Error.ELeft e => register_user_ e f
-  in
-  template_narrow (links {}) (
-    psw <- XMLW.lift fresh;
-    eml <- XMLW.lift fresh;
-    cid <- XMLW.lift (Captcha.allocate {});
-    pb
-    <xml>
-      <h1>Регистрация нового пользователя</h1>
-      {if err <> "" then
-      <xml><div class="alert alert-danger">
-        <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
-        <span class="sr-only">Ошибка:</span>
-        {[err]}
-      </div></xml> else <xml/>}
-      <form class={form_horizontal} style="text-align:left">
 
-        <div class="form-group">
-          <label for={eml} class="col-sm-2 control-label">Имя пользователя</label>
-          <div class="col-sm-10">
-            <textbox{#UName} class="form-control" placeholder="Имя пользователя" value={f.UName}/>
-          </div>
-        </div>
+    and register_user_ err f : transaction page =
+      let
+      in
+      template_narrow (links {}) (
+        psw <- XMLW.lift fresh;
+        eml <- XMLW.lift fresh;
+        cid <- XMLW.lift (Captcha.allocate {});
+        pb
+        <xml>
+          <h1>Регистрация нового пользователя</h1>
+          {if err <> "" then
+          <xml><div class="alert alert-danger">
+            <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+            <span class="sr-only">Ошибка:</span>
+            {[err]}
+          </div></xml> else <xml/>}
+          <form class={form_horizontal} style="text-align:left">
 
-        <div class="form-group">
-          <label for={eml} class="col-sm-2 control-label">Эл. почта</label>
-          <div class="col-sm-10">
-            <email{#Email} class="form-control" id={eml} placeholder="Email" value={f.Email}/>
-          </div>
-        </div>
+            <div class="form-group">
+              <label for={eml} class="col-sm-2 control-label">Имя пользователя</label>
+              <div class="col-sm-10">
+                <textbox{#UName} class="form-control" placeholder="Имя пользователя" value={f.UName}/>
+              </div>
+            </div>
 
-        <div class="form-group">
-          <label for={psw} class="col-sm-2 control-label">Пароль</label>
-          <div class="col-sm-10">
-            <password{#Password} class="form-control" id={psw} placeholder="Пароль" value={f.Password}/>
-          </div>
-        </div>
+            <div class="form-group">
+              <label for={eml} class="col-sm-2 control-label">Эл. почта</label>
+              <div class="col-sm-10">
+                <email{#Email} class="form-control" id={eml} placeholder="Email" value={f.Email}/>
+              </div>
+            </div>
 
-        <div class="form-group">
-          <label class="col-sm-2 control-label">Пароль (повтор)</label>
-          <div class="col-sm-10">
-            <password{#Password2} class="form-control" placeholder="Пароль (повтор)" value={f.Password2}/>
-          </div>
-        </div>
+            <div class="form-group">
+              <label for={psw} class="col-sm-2 control-label">Пароль</label>
+              <div class="col-sm-10">
+                <password{#Password} class="form-control" id={psw} placeholder="Пароль" value={f.Password}/>
+              </div>
+            </div>
 
-        <div class="form-group">
-          <label class="col-sm-2 control-label">Введите текст с картинки</label>
-          <div class="col-sm-4">
-            <textbox{#Capcheck} class="form-control"/><br/>
-            <img src={url (Captcha.blob cid)} alt="captcha"/>
-          </div>
-          <div class="col-sm-6"/>
-        </div>
+            <div class="form-group">
+              <label class="col-sm-2 control-label">Пароль (повтор)</label>
+              <div class="col-sm-10">
+                <password{#Password2} class="form-control" placeholder="Пароль (повтор)" value={f.Password2}/>
+              </div>
+            </div>
 
-        <div class="form-group">
-          <div class="col-sm-2"/>
-          <div class="col-sm-10">
-          <submit action={register_handler cid} class="btn btn-default" value="Отправить"/>
-          </div>
-        </div>
+            <div class="form-group">
+              <label class="col-sm-2 control-label">Введите текст с картинки</label>
+              <div class="col-sm-4">
+                <textbox{#Capcheck} class="form-control"/><br/>
+                <img src={url (Captcha.blob cid)} alt="captcha"/>
+              </div>
+              <div class="col-sm-6"/>
+            </div>
 
-      </form>
-    </xml>;
-    return {}
-  )
+            <div class="form-group">
+              <div class="col-sm-2"/>
+              <div class="col-sm-10">
+              <submit action={register_handler cid} class="btn btn-default" value="Отправить"/>
+              </div>
+            </div>
+
+          </form>
+        </xml>;
+        return {}
+      )
+      end
   end
 
 and main {} : transaction page =
