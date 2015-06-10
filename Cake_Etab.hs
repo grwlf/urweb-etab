@@ -31,6 +31,7 @@ bits = rule $ do
   library XMLW.lib
   library Captcha.lib
   library (file "lib/urweb-aatree/lib_aatree.urp")
+  safeGet "Etab/register_user"
   embed (file "Etab.css")
   ur (sys "list")
   ur (sys "option")
