@@ -58,7 +58,6 @@ fun template_ w links mb : transaction page =
     <xml>
       {nar.Container
       <xml>
-        {Soup.forkme_ribbon srcprj}
         {b}
       </xml>}
 
