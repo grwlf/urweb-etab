@@ -40,6 +40,8 @@ UWVER = $(shell $(URWEB) -version)
 	echo allow\ mime\ image\/gif  ;\
 	echo allow\ mime\ application\/octet\-stream  ;\
 	echo allow\ url\ https\:\/\/github\.com\/grwlf\/urweb\-etab\*  ;\
+	echo allow\ url\ http\:\/\/www\.bowmania\.ru\/forum\/\*  ;\
+	echo allow\ url\ http\:\/\/www\.archery\.su\/\*  ;\
 	echo library\ \.\/lib\/urweb\-monad\-pack\/  ;\
 	echo library\ \.\/lib\/urweb\-prelude\/  ;\
 	echo library\ \.\/lib\/uru3\/Bootstrap\/  ;\

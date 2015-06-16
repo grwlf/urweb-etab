@@ -24,6 +24,8 @@ bits = rule $ do
   allow mime "image/gif";
   allow mime "application/octet-stream";
   allow url "https://github.com/grwlf/urweb-etab*"
+  allow url "http://www.bowmania.ru/forum/*"
+  allow url "http://www.archery.su/*"
   library MonadPack.lib
   library Prelude.lib
   library Bootstrap.lib

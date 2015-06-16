@@ -135,7 +135,7 @@ datatype country = Russia | Bulgaia | OtherCountry of string
 
 datatype city = Moscow | Birsk | UlanUde | Kugesi | Unknown | Ryazan | Rybinsk |
                 Ekaterinburg | Beloretsk | SPB | VelikieLuki | Chita | Taganrog |
-                Cheboxary | OtherCiry of string | Vladimir | Oblast of city
+                Cheboxary | OtherCiry of string | Vladimir | Oblast of city | Cheliabinsk
 
 fun cityName_ru c : string =
   case c of
@@ -155,6 +155,7 @@ fun cityName_ru c : string =
     |Unknown => "По назначению"
     |Vladimir => "Владимир"
     |Oblast c => cityName_ru (case c of |Oblast x => x |y => y) ^ " (область)"
+    |Cheliabinsk => "Челябинск"
     |OtherCiry x => x
 
 con event_details = [
@@ -185,7 +186,7 @@ sequence events_gen
 
 fun event_insert_ s e' : transaction int =
   let 
-    val e : record event_details = e' ++ { Description = "Description", Sport = serialize s }
+    val e : record event_details = e' ++ { Sport = serialize s }
   in
   i <- nextval events_gen;
   dml(INSERT INTO events(Id, Start, Stop, Caption, Country, City, Kind, Description, Sport)
@@ -197,38 +198,47 @@ fun event_insert_ s e' : transaction int =
 fun event_insert e' : transaction int = event_insert_ Target e'
 fun event_insert_3D e' : transaction int = event_insert_ A3D e'
 
+val archery_su = show (bless "http://www.archery.su/%D0%BA%D0%B0%D0%BB%D0%B5%D0%BD%D0%B4%D0%B0%D1%80%D1%8C.html")
+
 fun state_cup e : transaction int =
   event_insert (e ++ {
+    Description = archery_su,
     Country = serialize Russia,
     Kind = serialize StateCup})
 
 fun state_tournament_adult e : transaction int =
   event_insert (e ++ {
+    Description = archery_su,
     Country = serialize Russia,
     Kind = serialize (StateTournament Adult)})
 
 fun state_tournament_youth e : transaction int =
   event_insert (e ++ {
+    Description = archery_su,
     Country = serialize Russia,
     Kind = serialize (StateTournament Youth)})
 
 fun state_competition e : transaction int =
   event_insert (e ++ {
+    Description = archery_su,
     Country = serialize Russia,
     Kind = serialize StateCompetition})
 
 fun zone_competition e : transaction int =
   event_insert (e ++ {
+    Description = archery_su,
     Country = serialize Russia,
     Kind = serialize ZoneCompetition})
 
 fun local_competition e : transaction int =
   event_insert (e ++ {
+    Description = archery_su,
     Country = serialize Russia,
     Kind = serialize LocalCompetition})
 
 fun local_tournament e : transaction int =
   event_insert (e ++ {
+    Description = archery_su,
     Country = serialize Russia,
     Kind = serialize (LocalTournament Adult)})
 
@@ -385,19 +395,57 @@ task initialize = fn _ =>
          { Start = mkDate15 13 06
          , Stop =  mkDate15 13 06
          , Caption = "Четыре сезона - июньский рубеж"
-         , City = serialize (Oblast Moscow)};
+         , City = serialize (Oblast Moscow)
+         , Description = "http://www.bowmania.ru/forum/index.php?topic=10788.0"};
 
   _ <- local_tournament_3D
          { Start = mkDate15 11 07
          , Stop =  mkDate15 12 07
          , Caption = "Gorbatka Open"
-         , City = serialize (Oblast Vladimir) };
+         , City = serialize (Oblast Vladimir)
+         , Description = "http://www.bowmania.ru/forum/index.php?topic=10105.0" };
 
   _ <- local_tournament_3D
          { Start = mkDate15 04 07
          , Stop =  mkDate15 04 07
          , Caption = "Чемпионат Москвы"
-         , City = serialize Moscow };
+         , City = serialize Moscow
+         , Description = "http://www.bowmania.ru/forum/index.php?topic=11016.0" };
+
+  _ <- local_tournament_3D
+         { Start = mkDate15 27 06
+         , Stop =  mkDate15 28 06
+         , Caption = "Гран-при Евразии"
+         , City = serialize Ekaterinburg
+         , Description = "http://www.bowmania.ru/forum/index.php?topic=9850.0" };
+
+  _ <- local_tournament_3D
+         { Start = mkDate15 06 07
+         , Stop =  mkDate15 07 07
+         , Caption = "Кубок России, 2й этап"
+         , City = serialize Ekaterinburg
+         , Description = "http://www.bowmania.ru/forum/index.php?topic=10650.0" };
+
+  _ <- local_tournament_3D
+         { Start = mkDate15 12 07
+         , Stop =  mkDate15 12 07
+         , Caption = "Уральская заимка, 2й этап"
+         , City = serialize (Oblast Cheliabinsk)
+         , Description = "http://www.bowmania.ru/forum/index.php?topic=11115.0" };
+
+  _ <- local_tournament_3D
+         { Start = mkDate15 13 09
+         , Stop =  mkDate15 13 09
+         , Caption = "Уральская заимка, 3й этап"
+         , City = serialize (Oblast Cheliabinsk)
+         , Description = "http://www.bowmania.ru/forum/index.php?topic=11115.0" };
+
+  _ <- local_tournament_3D
+         { Start = mkDate15 11 10
+         , Stop =  mkDate15 11 10
+         , Caption = "Уральская заимка, 4й этап"
+         , City = serialize (Oblast Cheliabinsk)
+         , Description = "http://www.bowmania.ru/forum/index.php?topic=11115.0" };
 
   return {}
 
@@ -468,14 +516,33 @@ fun caption e : (string * string) =
       |_=> ("КЛ/БЛ", if (strlen e.Caption) > 0 then e.Caption ^ " (" ^ k ^ ")" else k)
   end
 
+fun unwords_url [ctx] [[Body] ~ ctx] (s : string) : xml ([Body] ++ ctx) [] [] =
+  let
+    val (s1,s2) = (case String.split s #" " of |None => (s,"") |Some (s1, s2) => (s1,s2))
+  in
+      let
+        val (p:bool) = (String.isPrefix {Full=s1, Prefix="http://" }) ||
+                       (String.isPrefix {Full=s1, Prefix="https://"})
+      in
+        if s1 = "" then  <xml/> else
+          let
+            val next = <xml>{unwords_url s2}</xml>
+          in
+          case p of
+            |True => (case checkUrl s1 of
+              |Some u => <xml><a href={u}>{[s1]}</a> {next}</xml>
+              |None => <xml>{[s1]} (ссылка) {next}</xml>)
+            |False => <xml>{[s1]} {next}</xml>
+          end
+      end
+  end
+
 fun tooltip e : xbody =
   let
   in
   <xml>
   <strong>{[(caption e).2]}</strong> <br/>
   <strong>Город:</strong> {[cityName_ru (eventCity e)]}<br/>
-  <br/>
-  {[e.Description]}
   </xml>
   end
 
@@ -487,7 +554,7 @@ fun details e : transaction xbody =
   i <- fresh ; 
   Soup.modal {
     Title=<xml><h3>{[name]}</h3></xml>
-      , Body = <xml>{cdata e.Description}</xml>
+      , Body = <xml>{unwords_url e.Description}</xml>
       , Footer = <xml></xml>
       , Placeholder = 
       <xml>
