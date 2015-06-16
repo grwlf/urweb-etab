@@ -573,7 +573,7 @@ fun details e : transaction xbody =
   end
 
 fun links {} =
-  <xml><a href={url (register_user {})}>Зарегистрироваться</a></xml> ::
+  (* <xml><a href={url (register_user {})}>Зарегистрироваться</a></xml> :: *)
   []
 
 and register_user {} = 
