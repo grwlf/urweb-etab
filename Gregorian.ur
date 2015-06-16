@@ -15,3 +15,9 @@ fun monthLength isleap m =
 
 val ord_month = mkOrd { Lt = fn a b => monthToInt a < monthToInt b,
                            Le = fn a b => monthToInt a <= monthToInt b }
+
+fun isWeekend d : bool =
+  case intToDayOfWeek (datetimeDayOfWeek d) of
+    |Sunday => True
+    |Saturday => True
+    |_ => False

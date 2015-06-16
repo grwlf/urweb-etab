@@ -105,19 +105,10 @@ val template_narrow = template_ 768
 
 datatype lang = Ru
 
-datatype age = Youth | Adult
+datatype age = Youth | Adult | All
 
 datatype eventkind = StateTournament of age | StateCup | StateCompetition | ZoneCompetition
                      | LocalCompetition | LocalTournament of age
-
-fun kindStyle (e:eventkind) : css_style =
-  case e of
-    |StateTournament _ => STYLE "background:#FFEB99"
-    |StateCup => STYLE "background:#FF9900"
-    |StateCompetition => STYLE "background:#FF9900"
-    |ZoneCompetition => STYLE "background:#FF9900"
-    |LocalCompetition => STYLE "background:#FFFFA3"
-    |LocalTournament _ => STYLE "background:#FFFFA3"
 
 datatype sport = A3D | Target | Field
 
@@ -131,19 +122,21 @@ fun kindName_ru (e:eventkind) : (string*string) =
   case e of
     |StateTournament Youth => ("ПР", "Первенство России")
     |StateTournament Adult => ("ЧР", "Чемпионат России")
+    |StateTournament All => ("ЧР", "Чемпионат России")
     |StateCup =>        ("КР", "Кубок России")
     |StateCompetition => ("ВС", "Всероссийские соревнования")
     |ZoneCompetition => ("ЗС", "Зональные соревнования")
     |LocalCompetition => ("ЛС", "Локальные соревнования")
     |LocalTournament Adult => ("ЛЧ", "Локальный Чемпионат")
     |LocalTournament Youth => ("ЛП", "Локальное Первенство")
+    |LocalTournament All => ("ЛЧ", "Локальный Чемпионат")
 
 
 datatype country = Russia | Bulgaia | OtherCountry of string
 
 datatype city = Moscow | Birsk | UlanUde | Kugesi | Unknown | Ryazan | Rybinsk |
                 Ekaterinburg | Beloretsk | SPB | VelikieLuki | Chita | Taganrog |
-                Cheboxary | OtherCiry of string
+                Cheboxary | OtherCiry of string | Vladimir | Oblast of city
 
 fun cityName_ru c : string =
   case c of
@@ -161,6 +154,8 @@ fun cityName_ru c : string =
     |Taganrog => "Таганрог"
     |Cheboxary => "Чебоксары"
     |Unknown => "По назначению"
+    |Vladimir => "Владимир"
+    |Oblast c => cityName_ru (case c of |Oblast x => x |y => y) ^ " (область)"
     |OtherCiry x => x
 
 con event_details = [
@@ -189,9 +184,9 @@ con event = record event
 
 sequence events_gen
 
-fun event_insert e' : transaction int =
+fun event_insert_ s e' : transaction int =
   let 
-    val e : record event_details = e' ++ { Description = "Description", Sport = serialize Target }
+    val e : record event_details = e' ++ { Description = "Description", Sport = serialize s }
   in
   i <- nextval events_gen;
   dml(INSERT INTO events(Id, Start, Stop, Caption, Country, City, Kind, Description, Sport)
@@ -199,6 +194,9 @@ fun event_insert e' : transaction int =
              {[e.City]}, {[e.Kind]}, {[e.Description]}, {[e.Sport]}));
   return i
   end
+
+fun event_insert e' : transaction int = event_insert_ Target e'
+fun event_insert_3D e' : transaction int = event_insert_ A3D e'
 
 fun state_cup e : transaction int =
   event_insert (e ++ {
@@ -234,6 +232,11 @@ fun local_tournament e : transaction int =
   event_insert (e ++ {
     Country = serialize Russia,
     Kind = serialize (LocalTournament Adult)})
+
+fun local_tournament_3D e : transaction int =
+  event_insert_3D (e ++ {
+    Country = serialize Russia,
+    Kind = serialize (LocalTournament All)})
 
 fun mkDate d m y = fromDatetime y (m-1) d 12 0 0
 fun mkDate' d m y = fromDatetime y (Datetime.monthToInt m) d 12 0 0
@@ -378,6 +381,25 @@ task initialize = fn _ =>
          , Caption = "Чемпионат Московской области"
          , City = serialize Moscow };
 
+  (* 3D *)
+  _ <- local_tournament_3D
+         { Start = mkDate15 13 06
+         , Stop =  mkDate15 13 06
+         , Caption = "Четыре сезона - июньский рубеж"
+         , City = serialize (Oblast Moscow)};
+
+  _ <- local_tournament_3D
+         { Start = mkDate15 11 07
+         , Stop =  mkDate15 12 07
+         , Caption = "Gorbatka Open"
+         , City = serialize (Oblast Vladimir) };
+
+  _ <- local_tournament_3D
+         { Start = mkDate15 04 07
+         , Stop =  mkDate15 04 07
+         , Caption = "Чемпионат Москвы"
+         , City = serialize Moscow };
+
   return {}
 
 
@@ -436,18 +458,22 @@ fun splitLayers (l: list event) : lmap =
 fun getLayer i (m:lmap) : list event =
   case (LMap.lookup i m) of |None => [] | Some x => x
 
-fun caption e : string = 
+fun caption e : (string * string) = 
   let
-    val k = (kindName_ru (eventKind e)).2
+    val (abbr,k) = (kindName_ru (eventKind e))
+    val s = eventSport e
+    val a3d = sportName_ru A3D
   in
-    if (strlen e.Caption) > 0 then e.Caption ^ " (" ^ k ^ ")" else k
+    case s of
+      |A3D => (a3d, if (strlen e.Caption) > 0 then e.Caption else sportName_ru s)
+      |_=> ("КЛ/БЛ", if (strlen e.Caption) > 0 then e.Caption ^ " (" ^ k ^ ")" else k)
   end
 
 fun tooltip e : xbody =
   let
   in
   <xml>
-  <strong>{[caption e]}</strong> <br/>
+  <strong>{[(caption e).2]}</strong> <br/>
   <strong>Город:</strong> {[cityName_ru (eventCity e)]}<br/>
   <br/>
   {[e.Description]}
@@ -456,12 +482,12 @@ fun tooltip e : xbody =
 
 fun details e : transaction xbody =
   let
-    val (abbr,name) = kindName_ru (eventKind e)
+    val (abbr,name) = caption e
     val city = cityName_ru (eventCity e)
   in
   i <- fresh ; 
   Soup.modal {
-    Title=<xml><h3>{[caption e]}</h3></xml>
+    Title=<xml><h3>{[name]}</h3></xml>
       , Body = <xml>{cdata e.Description}</xml>
       , Footer = <xml></xml>
       , Placeholder = 
@@ -470,11 +496,10 @@ fun details e : transaction xbody =
           data-html="true"
           id={i}
           onmouseover={fn _ => Bootstrap.tooltip_xshow i (tooltip e)}
+          style="text-align:center"
         >
-        {if eventLength e <= 3 then
-          (cdata abbr)
-         else
-          (cdata (abbr^":"^city))
+        {case eventLength e of
+          |1=>(cdata abbr) |2=> (cdata abbr) |_=> (cdata (abbr^": "^city))
         }
         </div>
       </xml>
@@ -551,7 +576,7 @@ and register_user {} =
             <div class="form-group">
               <label class="col-sm-2 control-label">Введите текст с картинки</label>
               <div class="col-sm-4">
-                <textbox{#Capcheck} class="form-control"/><br/>
+                <textbox{#Capcheck} class="form-control" placeholder="Строчные латинские буквы"/><br/>
                 <img src={url (Captcha.blob cid)} alt="captcha"/>
               </div>
               <div class="col-sm-6"/>
@@ -580,10 +605,8 @@ and main {} : transaction page =
       val nl = LMap.size ls
     in
 
-    i <- XMLW.lift fresh;
-
     pb <xml>
-    <h1 data-html="true" id={i} onmouseover={fn _ => Bootstrap.tooltip_xshow i <xml>Haha<b>hah</b>aha</xml>}>
+    <h1>
       Календарный план соревнований по стрельбе из лука на {[year]} год</h1>
     </xml>;
 
@@ -593,17 +616,20 @@ and main {} : transaction page =
           val ndays = monthLength (isLeapYear year) m
           val days = sequence_ 1 ndays
           val border = STYLE "border:1px solid #ddd"
+          val border_we = STYLE "border:1px solid #ddd; background:#ddd"
         in
           pb <xml>
             <tr><td colspan={31}><h3>{cdata (monthName m)}</h3>
-            (* {List.mapX (fn e => <xml>{[e.Id]}:{[e.Caption]}<br/></xml>) (filterMonth m q)} *)
             </td></tr>
           </xml>;
 
           xtrow (
             forM_ (sequence_ 1 31) (fn i =>
               if i <= ndays then
-                pb <xml><td class="text-muted" style={border}>{[i]}</td></xml>
+                if isWeekend (mkDate' i m year) then
+                  pb <xml><td class="text-muted" style={border_we}>{[i]}</td></xml>
+                else
+                  pb <xml><td class="text-muted" style={border}>{[i]}</td></xml>
               else
                 pb <xml><td style={border}> </td></xml>
             )
@@ -631,7 +657,16 @@ and main {} : transaction page =
                               pb
                               <xml>
                                 <td colspan={min (daysDiff d eom) (daysDiff d e.Stop)}
-                                    style={kindStyle (deserialize e.Kind)}
+                                    style={
+                                      case (deserialize e.Kind, deserialize e.Sport) of
+                                        |(_,A3D) =>STYLE "background:#33CC33"
+                                        |(StateTournament _,_) => STYLE "background:#FFEB99"
+                                        |(StateCup,_) => STYLE "background:#FF9900"
+                                        |(StateCompetition,_) => STYLE "background:#FF9900"
+                                        |(ZoneCompetition,_) => STYLE "background:#FF9900"
+                                        |(LocalCompetition,_) => STYLE "background:#FFFFA3"
+                                        |(LocalTournament _,_) => STYLE "background:#FFFFA3"
+                                    }
                                     data-container="body"
                                 >
                                   {m}
@@ -666,10 +701,6 @@ and main {} : transaction page =
 
     )
     end;
-
-    (* forM x (fn x => *)
-    (*   return {} *)
-    (* ); *)
 
     return {}
   )
