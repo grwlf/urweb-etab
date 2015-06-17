@@ -51,6 +51,7 @@ fun template_ w links mb : transaction page =
   <xml>
     <title>Event table</title>
     (* <link rel="icon" type="image/x-icon" href={Favicon_ico.geturl}/> *)
+    {Analytics.insert "UA-55678474-3"}
   </xml> (
   Uru.withBody (fn _ =>
     b <- XMLW.run mb;
