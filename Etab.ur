@@ -251,6 +251,10 @@ fun local_tournament_3D e : transaction int =
 fun mkDate d m y = fromDatetime y (m-1) d 12 0 0
 fun mkDate' d m y = fromDatetime y (Datetime.monthToInt m) d 12 0 0
 fun mkDate15 d m = mkDate d m 2015
+fun sameDay (t:time) (n:time) : bool =
+  ((datetimeYear t) = (datetimeYear n) &&
+  (datetimeMonth t) = (datetimeMonth n) &&
+  (datetimeDay t) = (datetimeDay n))
 
 task initialize = fn _ =>
   (* Cleanup *)
@@ -684,6 +688,7 @@ and main {} : transaction page =
           val days = sequence_ 1 ndays
           val border = STYLE "border:1px solid #ddd"
           val border_we = STYLE "border:1px solid #ddd; background:#ddd"
+          val border_now = STYLE "border:3px solid #f88; background:#fdd"
         in
           pb <xml>
             <tr><td colspan={31}><h3>{cdata (monthName m)}</h3>
@@ -692,13 +697,21 @@ and main {} : transaction page =
 
           xtrow (
             forM_ (sequence_ 1 31) (fn i =>
+            let
+              val d = mkDate' i m year
+            in
               if i <= ndays then
-                if isWeekend (mkDate' i m year) then
-                  pb <xml><td class="text-muted" style={border_we}>{[i]}</td></xml>
+                n <- XMLW.lift Basis.now;
+                (if sameDay n d then
+                  pb <xml><td class="text-muted" style={border_now}>{[i]}</td></xml>
                 else
-                  pb <xml><td class="text-muted" style={border}>{[i]}</td></xml>
+                  (if isWeekend d then
+                    pb <xml><td class="text-muted" style={border_we}>{[i]}</td></xml>
+                  else
+                    pb <xml><td class="text-muted" style={border}>{[i]}</td></xml>))
               else
                 pb <xml><td style={border}> </td></xml>
+            end
             )
           );
 
