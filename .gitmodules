@@ -22,3 +22,6 @@
 [submodule "lib/urweb-captcha"]
 	path = lib/urweb-captcha
 	url = https://github.com/grwlf/urweb-captcha
+[submodule "lib/urweb-callback"]
+	path = lib/urweb-callback
+	url = https://github.com/grwlf/urweb-callback

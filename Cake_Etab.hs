@@ -8,6 +8,7 @@ import qualified Cake_MonadPack as MonadPack hiding(main)
 import qualified Cake_Soup as Soup hiding(main)
 import qualified Cake_XMLW as XMLW hiding(main)
 import qualified Cake_Captcha as Captcha hiding(main)
+import qualified Cake_Callback as Callback hiding(main)
 import Cake_Etab_P
 
 bits = rule $ do
@@ -32,6 +33,7 @@ bits = rule $ do
   library Soup.lib
   library XMLW.lib
   library Captcha.lib
+  library Callback.lib
   library (file "lib/urweb-aatree/lib_aatree.urp")
   safeGet "Etab/register_user"
   embed (file "Etab.css")
