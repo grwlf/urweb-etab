@@ -36,6 +36,7 @@ bits = rule $ do
   library Callback.lib
   library (file "lib/urweb-aatree/lib_aatree.urp")
   safeGet "Etab/register_user"
+  safeGet "Etab/contact_us"
   embed (file "Etab.css")
   ur (sys "list")
   ur (sys "option")

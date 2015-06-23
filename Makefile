@@ -51,6 +51,7 @@ UWVER = $(shell $(URWEB) -version)
 	echo library\ \.\/lib\/urweb\-callback\/  ;\
 	echo library\ \.\/lib\/urweb\-aatree\/lib\_aatree  ;\
 	echo safeGet\ Etab\/register\_user  ;\
+	echo safeGet\ Etab\/contact\_us  ;\
 	echo ffi\ \.\/autogen\/Etab\_css\_c  ;\
 	echo include\ \.\/autogen\/Etab\_css\_c\.h  ;\
 	echo link\ \.\/autogen\/Etab\_css\_c\.o  ;\

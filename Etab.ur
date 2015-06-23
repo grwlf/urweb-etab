@@ -261,6 +261,7 @@ task initialize = fn _ =>
   dml(DELETE FROM events WHERE Id > 0);
   setval events_gen 1;
 
+  (*{{{ Initial data *)
   (* State tournaments (Adult) *)
   _ <- state_tournament_adult {
            Start = mkDate15 01 02
@@ -451,6 +452,7 @@ task initialize = fn _ =>
          , Caption = "Уральская заимка, 4й этап"
          , City = serialize (Oblast Cheliabinsk)
          , Description = "http://www.bowmania.ru/forum/index.php?topic=11115.0" };
+  (*}}}*)
 
   return {}
 
@@ -579,8 +581,84 @@ fun details e : transaction xbody =
 
 fun links {} =
   (* <xml><a href={url (register_user {})}>Зарегистрироваться</a></xml> :: *)
+  <xml><a href={url (contact_us {})}>Обратная связь</a></xml> ::
   []
 
+(*{{{ Contact us *)
+and contact_us {} = 
+  let
+    contact_us_ "" {Email="", Capcheck="", Message=""}
+  where
+
+    fun contact_handler (cid:int) (f:{Email: string, Capcheck:string, Message:string}) : transaction page =
+      capt_ok <- Captcha.check_free f.Capcheck cid;
+      e <- E.run (
+        Prelude.when (f.Message = "") (E.fail "Сообщение не должно быть пустым");
+        Prelude.when (f.Email = "") (E.fail "Укажите адрес Вашей электронной почты");
+        Prelude.when (not capt_ok) (E.fail "Текст не совпадает с картинкой");
+        return {}
+      );
+      case e of
+        | Error.ERight {} => redirect (url (contact_us {}))
+        | Error.ELeft e => contact_us_ e f
+
+    and contact_us_ err f : transaction page =
+
+      template (links {}) (
+
+        cid <- XMLW.lift (Captcha.allocate {});
+
+        pb <xml>
+          <h1>Обратная связь</h1>
+          {if err <> "" then
+          <xml><div class="alert alert-danger">
+            <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+            <span class="sr-only">Ошибка:</span>
+            {[err]}
+          </div></xml> else <xml/>}
+
+          <form class={form_horizontal} style="text-align:left">
+            <div class="form-group">
+              <label class="col-sm-2 control-label">Эл. почта</label>
+              <div class="col-sm-10">
+                <email{#Email} class="form-control" placeholder="Email" value={f.Email}/>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="col-sm-2 control-label">Текст сообщения</label>
+              <div class="col-sm-10">
+                <textarea{#Message} class="form-control">{cdata f.Message}</textarea>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="col-sm-2 control-label">Введите текст с картинки</label>
+              <div class="col-sm-4">
+                <textbox{#Capcheck} class="form-control" placeholder="Строчные латинские буквы"/><br/>
+                <img src={url (Captcha.blob cid)} alt="captcha"/>
+              </div>
+              <div class="col-sm-6"/>
+            </div>
+
+            <div class="form-group">
+              <div class="col-sm-2"/>
+              <div class="col-sm-10">
+              <submit action={contact_handler cid} class="btn btn-default" value="Отправить"/>
+              </div>
+            </div>
+
+          </form>
+
+        </xml>;
+
+        return {}
+      )
+
+  end
+(*}}}*)
+  
+(*{{{ Register user *)
 and register_user {} = 
   let
     register_user_ "" {UName="", Email="", Password="", Password2="", Capcheck=""}
@@ -665,8 +743,9 @@ and register_user {} =
         return {}
       )
       end
-  end
+  end(*}}}*)
 
+(*{{{ Main *)
 and main {} : transaction page =
   template (links {}) (
     q <- XMLW.lift (queryL1 (SELECT * FROM events AS E ORDER BY E.Start DESC));
@@ -784,4 +863,5 @@ and main {} : transaction page =
 
     return {}
   )
+(*}}}*)
 
