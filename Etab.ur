@@ -251,10 +251,17 @@ fun local_tournament_3D e : transaction int =
 fun mkDate d m y = fromDatetime y (m-1) d 12 0 0
 fun mkDate' d m y = fromDatetime y (Datetime.monthToInt m) d 12 0 0
 fun mkDate15 d m = mkDate d m 2015
+
 fun sameDay (t:time) (n:time) : bool =
   ((datetimeYear t) = (datetimeYear n) &&
   (datetimeMonth t) = (datetimeMonth n) &&
   (datetimeDay t) = (datetimeDay n))
+
+fun monthGE (t:time) (n:time) : bool =
+  if (datetimeYear t) = (datetimeYear n) then
+    (datetimeMonth t) >= (datetimeMonth n)
+  else
+    if (datetimeYear t) > (datetimeYear n) then True else False
 
 task initialize = fn _ =>
   (* Check env *)
@@ -768,7 +775,9 @@ and register_user {} =
 
 (*{{{ Main *)
 and main {} : transaction page =
+
   template (links {}) (
+    now <- XMLW.lift Basis.now;
     q <- XMLW.lift (queryL1 (SELECT * FROM events AS E ORDER BY E.Start DESC));
     let
       val year = 2015
@@ -790,6 +799,7 @@ and main {} : transaction page =
           val border_we = STYLE "border:1px solid #ddd; background:#ddd"
           val border_now = STYLE "border:3px solid #f88; background:#fdd"
         in
+          if not (monthGE (mkDate' 1 m year) now) then return {} else
           pb <xml>
             <tr><td colspan={31}><h3>{cdata (monthName m)}</h3>
             </td></tr>
@@ -801,8 +811,7 @@ and main {} : transaction page =
               val d = mkDate' i m year
             in
               if i <= ndays then
-                n <- XMLW.lift Basis.now;
-                (if sameDay n d then
+                (if sameDay now d then
                   pb <xml><td class="text-muted" style={border_now}>{[i]}</td></xml>
                 else
                   (if isWeekend d then
