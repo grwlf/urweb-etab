@@ -257,6 +257,9 @@ fun sameDay (t:time) (n:time) : bool =
   (datetimeDay t) = (datetimeDay n))
 
 task initialize = fn _ =>
+  (* Check env *)
+  _ <- Email.env {};
+
   (* Cleanup *)
   dml(DELETE FROM events WHERE Id > 0);
   setval events_gen 1;
@@ -589,17 +592,28 @@ and contact_us {} =
   let
     contact_us_ "" {Email="", Capcheck="", Message=""}
   where
+    fun render_result (b:xbody) = 
+      template (links {}) (
+        pb <xml>
+          {b}
+        </xml>;
+        return {}
+      )
 
     fun contact_handler (cid:int) (f:{Email: string, Capcheck:string, Message:string}) : transaction page =
       capt_ok <- Captcha.check_free f.Capcheck cid;
       e <- E.run (
         Prelude.when (f.Message = "") (E.fail "Сообщение не должно быть пустым");
+        Prelude.when ((strlen f.Message) > 1024) (E.fail "Сообщение слишком длинное");
         Prelude.when (f.Email = "") (E.fail "Укажите адрес Вашей электронной почты");
         Prelude.when (not capt_ok) (E.fail "Текст не совпадает с картинкой");
         return {}
       );
+
       case e of
-        | Error.ERight {} => redirect (url (contact_us {}))
+        | Error.ERight {} =>
+            b <- Email.send "ierton@gmail.com" f.Email ("Etab message from " ^ f.Email) f.Message;
+            render_result b
         | Error.ELeft e => contact_us_ e f
 
     and contact_us_ err f : transaction page =
@@ -619,7 +633,7 @@ and contact_us {} =
 
           <form class={form_horizontal} style="text-align:left">
             <div class="form-group">
-              <label class="col-sm-2 control-label">Эл. почта</label>
+              <label class="col-sm-2 control-label">Ваша эл. почта</label>
               <div class="col-sm-10">
                 <email{#Email} class="form-control" placeholder="Email" value={f.Email}/>
               </div>
@@ -633,10 +647,17 @@ and contact_us {} =
             </div>
 
             <div class="form-group">
-              <label class="col-sm-2 control-label">Введите текст с картинки</label>
+              <div class="col-sm-2"/>
+              <div class="col-sm-4">
+                <img src={url (Captcha.blob cid)} alt="captcha"/>
+              </div>
+              <div class="col-sm-6"/>
+            </div>
+
+            <div class="form-group">
+              <label class="col-sm-2 control-label">Слово с картинки</label>
               <div class="col-sm-4">
                 <textbox{#Capcheck} class="form-control" placeholder="Строчные латинские буквы"/><br/>
-                <img src={url (Captcha.blob cid)} alt="captcha"/>
               </div>
               <div class="col-sm-6"/>
             </div>

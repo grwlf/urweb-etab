@@ -27,6 +27,8 @@ bits = rule $ do
   allow url "https://github.com/grwlf/urweb-etab*"
   allow url "http://www.bowmania.ru/forum/*"
   allow url "http://www.archery.su/*"
+  allow env "SWAKS"
+  allow env "PASS"
   library MonadPack.lib
   library Prelude.lib
   library Bootstrap.lib
@@ -44,6 +46,7 @@ bits = rule $ do
   ur (sys "datetime")
   ur (sys "char")
   ur (file "Gregorian.ur")
+  ur (file "Email.ur")
   ur (file "Etab.ur")
 
 main = writeDefaultMakefiles $ do

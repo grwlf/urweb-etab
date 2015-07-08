@@ -17,7 +17,7 @@ UWINCLUDEDIR = $(shell $(URWEB) -print-cinclude)/..
 UWVER = $(shell $(URWEB) -version)
 .PHONY: ./all
 ./all: ./Etab.exe ./Etab.sql ./Makefile.dev
-./.cake3/tmp___Etab_in_2: ./Etab.ur ./Gregorian.ur ./Makefile.dev ./autogen/Etab_css.ur ./autogen/Etab_css.urp.in ./autogen/Etab_css_c.c ./autogen/Etab_css_c.h ./autogen/Etab_css_c.o ./autogen/Etab_css_c.urs ./lib/urweb-aatree/lib_aatree.urp ./lib/uru3/Bootstrap/lib.urp ./lib/urweb-callback/lib.urp ./lib/urweb-captcha/lib.urp ./lib/urweb-monad-pack/lib.urp ./lib/urweb-prelude/lib.urp ./lib/urweb-soup/lib.urp ./lib/urweb-xmlw/lib.urp
+./.cake3/tmp___Etab_in_2: ./Email.ur ./Etab.ur ./Gregorian.ur ./Makefile.dev ./autogen/Etab_css.ur ./autogen/Etab_css.urp.in ./autogen/Etab_css_c.c ./autogen/Etab_css_c.h ./autogen/Etab_css_c.o ./autogen/Etab_css_c.urs ./lib/urweb-aatree/lib_aatree.urp ./lib/uru3/Bootstrap/lib.urp ./lib/urweb-callback/lib.urp ./lib/urweb-captcha/lib.urp ./lib/urweb-monad-pack/lib.urp ./lib/urweb-prelude/lib.urp ./lib/urweb-soup/lib.urp ./lib/urweb-xmlw/lib.urp
 	( \
 	echo   ;\
 	echo \.\/autogen\/Etab\_css  ;\
@@ -27,9 +27,10 @@ UWVER = $(shell $(URWEB) -version)
 	echo $$\/datetime  ;\
 	echo $$\/char  ;\
 	echo \.\/Gregorian  ;\
+	echo \.\/Email  ;\
 	echo \.\/Etab  ;\
 	) > ./.cake3/tmp___Etab_in_2
-./.cake3/tmp___Etab_in_1: ./Etab.ur ./Gregorian.ur ./Makefile.dev ./autogen/Etab_css.ur ./autogen/Etab_css.urp.in ./autogen/Etab_css_c.c ./autogen/Etab_css_c.h ./autogen/Etab_css_c.o ./autogen/Etab_css_c.urs ./lib/urweb-aatree/lib_aatree.urp ./lib/uru3/Bootstrap/lib.urp ./lib/urweb-callback/lib.urp ./lib/urweb-captcha/lib.urp ./lib/urweb-monad-pack/lib.urp ./lib/urweb-prelude/lib.urp ./lib/urweb-soup/lib.urp ./lib/urweb-xmlw/lib.urp
+./.cake3/tmp___Etab_in_1: ./Email.ur ./Etab.ur ./Gregorian.ur ./Makefile.dev ./autogen/Etab_css.ur ./autogen/Etab_css.urp.in ./autogen/Etab_css_c.c ./autogen/Etab_css_c.h ./autogen/Etab_css_c.o ./autogen/Etab_css_c.urs ./lib/urweb-aatree/lib_aatree.urp ./lib/uru3/Bootstrap/lib.urp ./lib/urweb-callback/lib.urp ./lib/urweb-captcha/lib.urp ./lib/urweb-monad-pack/lib.urp ./lib/urweb-prelude/lib.urp ./lib/urweb-soup/lib.urp ./lib/urweb-xmlw/lib.urp
 	( \
 	echo database\ dbname\=Etab  ;\
 	echo sql\ \.\/Etab\.sql  ;\
@@ -42,6 +43,8 @@ UWVER = $(shell $(URWEB) -version)
 	echo allow\ url\ https\:\/\/github\.com\/grwlf\/urweb\-etab\*  ;\
 	echo allow\ url\ http\:\/\/www\.bowmania\.ru\/forum\/\*  ;\
 	echo allow\ url\ http\:\/\/www\.archery\.su\/\*  ;\
+	echo allow\ env\ SWAKS  ;\
+	echo allow\ env\ PASS  ;\
 	echo library\ \.\/lib\/urweb\-monad\-pack\/  ;\
 	echo library\ \.\/lib\/urweb\-prelude\/  ;\
 	echo library\ \.\/lib\/uru3\/Bootstrap\/  ;\
