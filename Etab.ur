@@ -81,6 +81,7 @@ fun template_ w links mb : transaction page =
           links
           )}
         </ul>
+        {Snippets.paypalDonate {Email = "ierton@gmail.com", Service = "archerydays.ru"}}
         </p>
       </xml>}
 
