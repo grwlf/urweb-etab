@@ -40,6 +40,12 @@ fun daysDiff t1 t2 = (((toSeconds t2) - (toSeconds t1)) / (60 * 60 * 24)) + 1
 
 val srcprj = bless "https://github.com/grwlf/urweb-etab"
 
+(* val donate = Unsafe.s2xbody *)
+(*   "<iframe frameborder='0' allowtransparency='true' scrolling='no' src='https://money.yandex.ru/embed/donate.xml?account=41001443664241&quickpay=donate&default-sum=10&targets=%D0%9F%D0%BE%D0%B4%D0%B4%D0%B5%D1%80%D0%B6%D0%BA%D0%B0+%D0%BF%D1%80%D0%BE%D0%B5%D0%BA%D1%82%D0%B0&target-visibility=on&project-name=ArcheryDays.ru&project-site=ArcheryDays.ru&button-text=05&successURL=ArcheryDays.ru' width='441' height='132'></iframe>" *)
+
+val donate = Unsafe.s2xbody
+  "<iframe frameborder='0' allowtransparency='true' scrolling='no' src='https://money.yandex.ru/embed/donate.xml?account=41001443664241&quickpay=donate&payment-type-choice=off&default-sum=100&targets=%D0%9F%D0%BE%D0%B4%D0%B4%D0%B5%D1%80%D0%B6%D0%BA%D0%B0+%D0%BF%D1%80%D0%BE%D0%B5%D0%BA%D1%82%D0%B0&target-visibility=on&project-name=ArcheryDays.ru&project-site=ArcheryDays.ru&button-text=05&successURL=ArcheryDays.ru' width='512' height='132'></iframe>"
+
 fun template_ w links mb : transaction page =
   let
   Uru.run (
@@ -81,7 +87,7 @@ fun template_ w links mb : transaction page =
           links
           )}
         </ul>
-        {Snippets.paypalDonate {Email = "ierton@gmail.com", Service = "archerydays.ru"}}
+        {donate}
         </p>
       </xml>}
 
