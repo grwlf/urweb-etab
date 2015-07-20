@@ -21,3 +21,25 @@ fun isWeekend d : bool =
     |Sunday => True
     |Saturday => True
     |_ => False
+
+fun monthName m =
+  case m of
+    January => "Январь" | February=> "Февраль"  | March=> "Март"  | April=> "Апрель"  |
+    May=> "Май" | June=> "Июнь"  | July=> "Июль"  | August=> "Август"  | September=> "Сентябрь" |
+    October=> "Октябрь"  | November=> "Ноябрь"  | December => "Декабрь"
+
+fun toMonth t = (fromTime t).Month
+
+fun daysDiff t1 t2 = (((toSeconds t2) - (toSeconds t1)) / (60 * 60 * 24)) + 1
+
+fun sameDay (t:time) (n:time) : bool =
+  ((datetimeYear t) = (datetimeYear n) &&
+  (datetimeMonth t) = (datetimeMonth n) &&
+  (datetimeDay t) = (datetimeDay n))
+
+fun monthGE (t:time) (n:time) : bool =
+  if (datetimeYear t) = (datetimeYear n) then
+    (datetimeMonth t) >= (datetimeMonth n)
+  else
+    if (datetimeYear t) > (datetimeYear n) then True else False
+

@@ -27,8 +27,6 @@ fun iwhile [s:::Type] (f: s -> (s * bool)) (s:s) : s =
     if ex then s' else iwhile f s'
   end
 
-fun daysDiff t1 t2 = (((toSeconds t2) - (toSeconds t1)) / (60 * 60 * 24)) + 1
-
 (*
  _____                    _       _
 |_   _|__ _ __ ___  _ __ | | __ _| |_ ___
@@ -39,9 +37,6 @@ fun daysDiff t1 t2 = (((toSeconds t2) - (toSeconds t1)) / (60 * 60 * 24)) + 1
 *)
 
 val srcprj = bless "https://github.com/grwlf/urweb-etab"
-
-(* val donate = Unsafe.s2xbody *)
-(*   "<iframe frameborder='0' allowtransparency='true' scrolling='no' src='https://money.yandex.ru/embed/donate.xml?account=41001443664241&quickpay=donate&default-sum=10&targets=%D0%9F%D0%BE%D0%B4%D0%B4%D0%B5%D1%80%D0%B6%D0%BA%D0%B0+%D0%BF%D1%80%D0%BE%D0%B5%D0%BA%D1%82%D0%B0&target-visibility=on&project-name=ArcheryDays.ru&project-site=ArcheryDays.ru&button-text=05&successURL=ArcheryDays.ru' width='441' height='132'></iframe>" *)
 
 val donate = Unsafe.s2xbody
   "<iframe frameborder='0' allowtransparency='true' scrolling='no' src='https://money.yandex.ru/embed/donate.xml?account=41001443664241&quickpay=donate&payment-type-choice=off&default-sum=100&targets=%D0%9F%D0%BE%D0%B4%D0%B4%D0%B5%D1%80%D0%B6%D0%BA%D0%B0+%D0%BF%D1%80%D0%BE%D0%B5%D0%BA%D1%82%D0%B0&target-visibility=on&project-name=ArcheryDays.ru&project-site=ArcheryDays.ru&button-text=05&successURL=ArcheryDays.ru' width='512' height='132'></iframe>"
@@ -55,8 +50,7 @@ fun template_ w links mb : transaction page =
   Uru.withStylesheet (Etab_css.url) (
   Uru.withHeader
   <xml>
-    <title>Event table</title>
-    (* <link rel="icon" type="image/x-icon" href={Favicon_ico.geturl}/> *)
+    <title>Календарный план соревнований</title>
     {Analytics.insert "UA-55678474-3"}
   </xml> (
   Uru.withBody (fn _ =>
@@ -192,6 +186,12 @@ con event = record event
 
 sequence events_gen
 
+fun filterMonth (m:month)  (l:list event) : list event =
+    List.filter (fn e => (m >= (toMonth e.Start)) && (toMonth e.Stop) >= m) l
+
+fun splitMonths (l:list event) : list (list event) =
+  List.mp (fn m => filterMonth m l) months
+
 fun event_insert_ s e' : transaction int =
   let 
     val e : record event_details = e' ++ { Sport = serialize s }
@@ -258,17 +258,6 @@ fun local_tournament_3D e : transaction int =
 fun mkDate d m y = fromDatetime y (m-1) d 12 0 0
 fun mkDate' d m y = fromDatetime y (Datetime.monthToInt m) d 12 0 0
 fun mkDate15 d m = mkDate d m 2015
-
-fun sameDay (t:time) (n:time) : bool =
-  ((datetimeYear t) = (datetimeYear n) &&
-  (datetimeMonth t) = (datetimeMonth n) &&
-  (datetimeDay t) = (datetimeDay n))
-
-fun monthGE (t:time) (n:time) : bool =
-  if (datetimeYear t) = (datetimeYear n) then
-    (datetimeMonth t) >= (datetimeMonth n)
-  else
-    if (datetimeYear t) > (datetimeYear n) then True else False
 
 task initialize = fn _ =>
   (* Check env *)
@@ -486,20 +475,6 @@ task initialize = fn _ =>
 val pb = @@XMLW.push_back_xml
 fun xt m = XMLW.push_back (XMLW.nest (fn x=><xml><table class="bs3-table table-striped">{x}</table></xml>) m)
 fun xtrow m = XMLW.push_back (XMLW.nest (fn x=><xml><tr>{x}</tr></xml>) m)
-
-fun monthName m =
-  case m of
-    January => "Январь" | February=> "Февраль"  | March=> "Март"  | April=> "Апрель"  |
-    May=> "Май" | June=> "Июнь"  | July=> "Июль"  | August=> "Август"  | September=> "Сентябрь" |
-    October=> "Октябрь"  | November=> "Ноябрь"  | December => "Декабрь"
-
-fun toMonth t = (fromTime t).Month
-
-fun filterMonth (m:month)  (l:list event) : list event =
-    List.filter (fn e => (m >= (toMonth e.Start)) && (toMonth e.Stop) >= m) l
-
-fun splitMonths (l:list event) : list (list event) =
-  List.mp (fn m => filterMonth m l) months
 
 structure LMap = AATreeMap.MkAATreeMap (struct
   type key = int
@@ -781,7 +756,7 @@ and register_user {} =
   end(*}}}*)
 
 (*{{{ Main *)
-and main {} : transaction page =
+and main_ o : transaction page =
 
   template (links {}) (
     now <- XMLW.lift Basis.now;
@@ -797,6 +772,17 @@ and main {} : transaction page =
       Календарный план соревнований по стрельбе из лука на {[year]} год</h1>
     </xml>;
 
+    pb (
+      if o.ShowPastMonths then
+        <xml>
+          <a href={url (main_ {ShowPastMonths = False})}>Скрыть прошедшие месяцы</a>
+        </xml>
+      else
+        <xml>
+          <a href={url (main_ {ShowPastMonths = True})}>Показать прошедшие месяцы</a>
+        </xml>
+    );
+
     xt (
       forM_ months (fn m =>
         let
@@ -806,9 +792,9 @@ and main {} : transaction page =
           val border_we = STYLE "border:1px solid #ddd; background:#ddd"
           val border_now = STYLE "border:3px solid #f88; background:#fdd"
         in
-          if not (monthGE (mkDate' 1 m year) now) then return {} else
+          if (not o.ShowPastMonths) && (not (monthGE (mkDate' 1 m year) now)) then return {} else
           pb <xml>
-            <tr><td colspan={31}><h3>{cdata (monthName m)}</h3>
+            <tr><td style="border-top:0px" colspan={31}><h3>{cdata (monthName m)}</h3>
             </td></tr>
           </xml>;
 
@@ -900,5 +886,8 @@ and main {} : transaction page =
 
     return {}
   )
+
+and main {} = main_ {ShowPastMonths = False}
+
 (*}}}*)
 
