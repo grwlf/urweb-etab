@@ -17,7 +17,7 @@ UWINCLUDEDIR = $(shell $(URWEB) -print-cinclude)/..
 UWVER = $(shell $(URWEB) -version)
 .PHONY: ./all
 ./all: ./Etab.exe ./Etab.sql ./Makefile
-./.cake3/tmp___Etab_in_2: ./Email.ur ./Etab.ur ./Gregorian.ur ./Makefile ./autogen/Etab_css.ur ./autogen/Etab_css_c.h ./autogen/Etab_css_c.o ./lib/urweb-aatree/lib_aatree.urp ./lib/uru3/Bootstrap/lib.urp ./lib/urweb-callback/lib.urp ./lib/urweb-captcha/lib.urp ./lib/urweb-monad-pack/lib.urp ./lib/urweb-prelude/lib.urp ./lib/urweb-soup/lib.urp ./lib/urweb-xmlw/lib.urp
+./.cake3/tmp___Etab_in_2: ./Email.ur ./Etab.ur ./Gregorian.ur ./Makefile ./Types.ur ./autogen/Etab_css.ur ./autogen/Etab_css_c.h ./autogen/Etab_css_c.o ./lib/urweb-aatree/lib_aatree.urp ./lib/uru3/Bootstrap/lib.urp ./lib/urweb-callback/lib.urp ./lib/urweb-captcha/lib.urp ./lib/urweb-monad-pack/lib.urp ./lib/urweb-prelude/lib.urp ./lib/urweb-soup/lib.urp ./lib/urweb-xmlw/lib.urp
 	( \
 	echo   ;\
 	echo \.\/autogen\/Etab\_css  ;\
@@ -28,9 +28,10 @@ UWVER = $(shell $(URWEB) -version)
 	echo $$\/char  ;\
 	echo \.\/Gregorian  ;\
 	echo \.\/Email  ;\
+	echo \.\/Types  ;\
 	echo \.\/Etab  ;\
 	) > ./.cake3/tmp___Etab_in_2
-./.cake3/tmp___Etab_in_1: ./Email.ur ./Etab.ur ./Gregorian.ur ./Makefile ./autogen/Etab_css.ur ./autogen/Etab_css_c.h ./autogen/Etab_css_c.o ./lib/urweb-aatree/lib_aatree.urp ./lib/uru3/Bootstrap/lib.urp ./lib/urweb-callback/lib.urp ./lib/urweb-captcha/lib.urp ./lib/urweb-monad-pack/lib.urp ./lib/urweb-prelude/lib.urp ./lib/urweb-soup/lib.urp ./lib/urweb-xmlw/lib.urp
+./.cake3/tmp___Etab_in_1: ./Email.ur ./Etab.ur ./Gregorian.ur ./Makefile ./Types.ur ./autogen/Etab_css.ur ./autogen/Etab_css_c.h ./autogen/Etab_css_c.o ./lib/urweb-aatree/lib_aatree.urp ./lib/uru3/Bootstrap/lib.urp ./lib/urweb-callback/lib.urp ./lib/urweb-captcha/lib.urp ./lib/urweb-monad-pack/lib.urp ./lib/urweb-prelude/lib.urp ./lib/urweb-soup/lib.urp ./lib/urweb-xmlw/lib.urp
 	( \
 	echo database\ dbname\=Etab  ;\
 	echo sql\ \.\/Etab\.sql  ;\

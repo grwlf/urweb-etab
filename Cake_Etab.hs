@@ -47,6 +47,7 @@ bits = rule $ do
   ur (sys "char")
   ur (file "Gregorian.ur")
   ur (file "Email.ur")
+  ur (file "Types.ur")
   ur (file "Etab.ur")
 
 main = writeDefaultMakefiles $ do
