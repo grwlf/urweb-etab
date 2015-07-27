@@ -15,3 +15,8 @@ div.tooltip-inner {
     max-width: 350px;
     white-space:normal;
 }
+
+.Etab_bg_3d { background:#BFB273 ; }
+.Etab_bg_tournament { background:#6F92BF ; }
+.Etab_bg_open { background:#D95F43 ; }
+

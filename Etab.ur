@@ -38,6 +38,10 @@ fun iwhile [s:::Type] (f: s -> (s * bool)) (s:s) : s =
                    |_|
 *)
 
+style bg_3d
+style bg_tournament
+style bg_open
+
 val srcprj = bless "https://github.com/grwlf/urweb-etab"
 
 val donate = Unsafe.s2xbody
@@ -750,15 +754,15 @@ and main_ o : transaction page =
                               pb
                               <xml>
                                 <td colspan={min (daysDiff d eom) (daysDiff d e.Stop)}
-                                    style={
+                                    class={
                                       case (deserialize e.Kind, deserialize e.Sport) of
-                                        |(_,A3D) =>STYLE "background:#33CC33"
-                                        |(StateTournament _,_) => STYLE "background:#FFEB99"
-                                        |(StateCup,_) => STYLE "background:#FF9900"
-                                        |(StateCompetition,_) => STYLE "background:#FF9900"
-                                        |(ZoneCompetition,_) => STYLE "background:#FF9900"
-                                        |(LocalCompetition,_) => STYLE "background:#FFFFA3"
-                                        |(LocalTournament _,_) => STYLE "background:#FFFFA3"
+                                        |(_,A3D) =>bg_3d
+                                        |(StateTournament _,_) => bg_tournament
+                                        |(StateCup,_) => bg_open
+                                        |(StateCompetition,_) => bg_open
+                                        |(ZoneCompetition,_) => bg_open
+                                        |(LocalCompetition,_) => bg_open
+                                        |(LocalTournament _,_) => bg_tournament
                                     }
                                     data-container="body"
                                 >
