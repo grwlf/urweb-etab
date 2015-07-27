@@ -40,6 +40,7 @@ bits = rule $ do
   safeGet "Etab/register_user"
   safeGet "Etab/contact_us"
   embed (file "Etab.css")
+  static "/Image_jpg/contents" (file "Image.jpg")
   ur (sys "list")
   ur (sys "option")
   ur (sys "string")

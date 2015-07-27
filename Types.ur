@@ -14,7 +14,7 @@ datatype lang = Ru
 datatype age = Youth | Adult | All
 
 datatype eventkind = StateTournament of age | StateCup | StateCompetition | ZoneCompetition
-                     | LocalCompetition | LocalTournament of age
+                     | CityCompetition | CityTournament of age
 
 datatype sport = A3D | Target | Field
 
@@ -32,17 +32,18 @@ fun kindName_ru (e:eventkind) : (string*string) =
     |StateCup =>        ("КР", "Кубок России")
     |StateCompetition => ("ВС", "Всероссийские соревнования")
     |ZoneCompetition => ("ЗС", "Зональные соревнования")
-    |LocalCompetition => ("ЛС", "Локальные соревнования")
-    |LocalTournament Adult => ("ЛЧ", "Локальный Чемпионат")
-    |LocalTournament Youth => ("ЛП", "Локальное Первенство")
-    |LocalTournament All => ("ЛЧ", "Локальный Чемпионат")
+    |CityCompetition => ("ЛС", "Городские соревнования")
+    |CityTournament Adult => ("ГЧ", "Чемпионат города")
+    |CityTournament Youth => ("ГП", "Первенство города")
+    |CityTournament All => ("ГЧ", "Чемпионат города")
 
 
 datatype country = Russia | Bulgaia | OtherCountry of string
 
 datatype city = Moscow | Birsk | UlanUde | Kugesi | Unknown | Ryazan | Rybinsk |
                 Ekaterinburg | Beloretsk | SPB | VelikieLuki | Chita | Taganrog |
-                Cheboxary | OtherCiry of string | Vladimir | Oblast of city | Cheliabinsk
+                Cheboxary | OtherCiry of string | Vladimir | Oblast of city | Cheliabinsk |
+                Voronezh
 
 fun cityName_ru c : string =
   case c of
@@ -63,6 +64,7 @@ fun cityName_ru c : string =
     |Vladimir => "Владимир"
     |Oblast c => cityName_ru (case c of |Oblast x => x |y => y) ^ " (область)"
     |Cheliabinsk => "Челябинск"
+    |Voronezh => "Воронеж"
     |OtherCiry x => x
 
 con event_details = [

@@ -42,6 +42,9 @@ style bg_3d
 style bg_tournament
 style bg_open
 
+
+style wide
+
 val srcprj = bless "https://github.com/grwlf/urweb-etab"
 
 val donate = Unsafe.s2xbody
@@ -61,8 +64,13 @@ fun template_ w links mb : transaction page =
   </xml> (
   Uru.withBody (fn _ =>
     b <- XMLW.run mb;
+    x <- fresh;
     return
     <xml>
+      <header class="wide">
+      (* <h1>Hello, UrWeb!</h1> *)
+      </header>
+
       {nar.Container
       <xml>
         {b}
@@ -72,22 +80,13 @@ fun template_ w links mb : transaction page =
       <xml>
         <hr/>
         <p class="text-muted">
-          The site is written in <a href={bless "http://impredicative.com/ur/"}>Ur/Web</a>,
-          the general-purpose typed functional language.
+          Сайт разработан с помощью <a href={bless "http://impredicative.com/ur/"}>Ur/Web</a>.
         </p>
         <p class="text-muted">
         <ul style="padding-left: 0px; margin-top: 20px; color: #999;">
-          {Soup.footer_doc_links (
-          <xml><a href={srcprj}>Sources</a></xml> ::
-          <xml><a href={bless "http://github.com/grwlf/cake3"}>Cake3</a></xml> ::
-          <xml><a href={bless "http://github.com/grwlf/uru3"}>Uru3</a></xml> ::
-          <xml><a href={bless "http://github.com/grwlf/urweb-monad-pack"}>MonadPack</a></xml> ::
-          <xml><a href={bless "http://github.com/grwlf/urweb-xmlw"}>XMLW</a></xml> ::
-          <xml><a href={bless "http://github.com/grwlf/urweb-soup"}>Soup</a></xml> ::
-          links
-          )}
+          {Soup.footer_doc_links ( links.Bottom  )}
         </ul>
-        {donate}
+        (* {donate} *)
         </p>
       </xml>}
 
@@ -153,22 +152,21 @@ fun zone_competition e : transaction int =
     Country = serialize Russia,
     Kind = serialize ZoneCompetition})
 
-fun local_competition e : transaction int =
+fun city_competition e : transaction int =
+  event_insert (e ++ {
+    Country = serialize Russia,
+    Kind = serialize CityCompetition})
+
+fun city_tournament e : transaction int =
   event_insert (e ++ {
     Description = archery_su,
     Country = serialize Russia,
-    Kind = serialize LocalCompetition})
+    Kind = serialize (CityTournament Adult)})
 
-fun local_tournament e : transaction int =
-  event_insert (e ++ {
-    Description = archery_su,
-    Country = serialize Russia,
-    Kind = serialize (LocalTournament Adult)})
-
-fun local_tournament_3D e : transaction int =
+fun city_tournament_3D e : transaction int =
   event_insert_3D (e ++ {
     Country = serialize Russia,
-    Kind = serialize (LocalTournament All)})
+    Kind = serialize (CityTournament All)})
 
 fun mkDate d m y = fromDatetime y (m-1) d 12 0 0
 fun mkDate' d m y = fromDatetime y (Datetime.monthToInt m) d 12 0 0
@@ -310,64 +308,71 @@ task initialize = fn _ =>
          , Caption = "Этап 2, сезон 2015-2016"
          , City = serialize Beloretsk };
 
-  (* Local *)
-  _ <- local_tournament
+  (* City *)
+  _ <- city_tournament
          { Start = mkDate15 31 05
          , Stop =  mkDate15 31 05
          , Caption = "Чемпионат Московской области"
          , City = serialize Moscow };
 
+  _ <- city_competition
+         { Start = mkDate15 30 08
+         , Stop =  mkDate15 30 08
+         , Caption = "Чемпионат Воронежа"
+         , City = serialize Voronezh
+         , Description = ""};
+
   (* 3D *)
-  _ <- local_tournament_3D
+  _ <- city_tournament_3D
          { Start = mkDate15 13 06
          , Stop =  mkDate15 13 06
          , Caption = "Четыре сезона - июньский рубеж"
          , City = serialize (Oblast Moscow)
          , Description = "http://www.bowmania.ru/forum/index.php?topic=10788.0"};
 
-  _ <- local_tournament_3D
+  _ <- city_tournament_3D
          { Start = mkDate15 11 07
          , Stop =  mkDate15 12 07
          , Caption = "Gorbatka Open"
          , City = serialize (Oblast Vladimir)
          , Description = "http://www.bowmania.ru/forum/index.php?topic=10105.0" };
 
-  _ <- local_tournament_3D
+  _ <- city_tournament_3D
          { Start = mkDate15 04 07
          , Stop =  mkDate15 04 07
          , Caption = "Чемпионат Москвы"
          , City = serialize Moscow
          , Description = "http://www.bowmania.ru/forum/index.php?topic=11016.0" };
 
-  _ <- local_tournament_3D
+  _ <- city_tournament_3D
          { Start = mkDate15 27 06
          , Stop =  mkDate15 28 06
          , Caption = "Гран-при Евразии"
          , City = serialize Ekaterinburg
          , Description = "http://www.bowmania.ru/forum/index.php?topic=9850.0" };
 
-  _ <- local_tournament_3D
+  _ <- city_tournament_3D
          { Start = mkDate15 06 07
          , Stop =  mkDate15 07 07
          , Caption = "Кубок России, 2й этап"
          , City = serialize Ekaterinburg
          , Description = "http://www.bowmania.ru/forum/index.php?topic=10650.0" };
 
-  _ <- local_tournament_3D
+  _ <- city_tournament_3D
          { Start = mkDate15 12 07
          , Stop =  mkDate15 12 07
          , Caption = "Уральская заимка, 2й этап"
          , City = serialize (Oblast Cheliabinsk)
          , Description = "http://www.bowmania.ru/forum/index.php?topic=11115.0" };
 
-  _ <- local_tournament_3D
+  _ <- city_tournament_3D
          { Start = mkDate15 13 09
          , Stop =  mkDate15 13 09
          , Caption = "Уральская заимка, 3й этап"
          , City = serialize (Oblast Cheliabinsk)
          , Description = "http://www.bowmania.ru/forum/index.php?topic=11115.0" };
 
-  _ <- local_tournament_3D
+  _ <- city_tournament_3D
          { Start = mkDate15 11 10
          , Stop =  mkDate15 11 10
          , Caption = "Уральская заимка, 4й этап"
@@ -427,7 +432,7 @@ fun caption e : (string * string) =
   in
     case s of
       |A3D => (a3d, if (strlen e.Caption) > 0 then e.Caption else sportName_ru s)
-      |_=> ("КЛ/БЛ", if (strlen e.Caption) > 0 then e.Caption ^ " (" ^ k ^ ")" else k)
+      |_=> ("К/Б", if (strlen e.Caption) > 0 then e.Caption ^ " (" ^ k ^ ")" else k)
   end
 
 fun unwords_url [ctx] [[Body] ~ ctx] (s : string) : xml ([Body] ++ ctx) [] [] =
@@ -486,10 +491,13 @@ fun details e : transaction xbody =
   }
   end
 
-fun links {} =
-  (* <xml><a href={url (register_user {})}>Зарегистрироваться</a></xml> :: *)
-  <xml><a href={url (contact_us {})}>Обратная связь</a></xml> ::
-  []
+fun links {} = {
+      Main = url (main {}),
+      Bottom =
+        (* <xml><a href={url (register_user {})}>Зарегистрироваться</a></xml> :: *)
+        <xml><a href={url (contact_us {})}>Обратная связь</a></xml> ::
+        []
+    }
 
 (*{{{ Contact us *)
 and contact_us {} = 
@@ -537,7 +545,7 @@ and contact_us {} =
 
           <form class={form_horizontal} style="text-align:left">
             <div class="form-group">
-              <label class="col-sm-2 control-label">Ваша эл. почта</label>
+              <label class="col-sm-2 control-label">Эл.почта отправителя</label>
               <div class="col-sm-10">
                 <email{#Email} class="form-control" placeholder="Email" value={f.Email}/>
               </div>
@@ -761,8 +769,8 @@ and main_ o : transaction page =
                                         |(StateCup,_) => bg_open
                                         |(StateCompetition,_) => bg_open
                                         |(ZoneCompetition,_) => bg_open
-                                        |(LocalCompetition,_) => bg_open
-                                        |(LocalTournament _,_) => bg_tournament
+                                        |(CityCompetition,_) => bg_open
+                                        |(CityTournament _,_) => bg_tournament
                                     }
                                     data-container="body"
                                 >
