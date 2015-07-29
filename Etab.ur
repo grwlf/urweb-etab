@@ -60,6 +60,7 @@ fun template_ w links mb : transaction page =
   Uru.withHeader
   <xml>
     <title>Календарный план соревнований</title>
+    <link rel="icon" type="image/x-icon" href={Etab_ico.geturl}/>
     {Analytics.insert "UA-55678474-3"}
   </xml> (
   Uru.withBody (fn _ =>
