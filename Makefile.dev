@@ -45,6 +45,7 @@ UWVER = $(shell $(URWEB) -version)
 	echo allow\ url\ https\:\/\/github\.com\/grwlf\/urweb\-etab\*  ;\
 	echo allow\ url\ http\:\/\/www\.bowmania\.ru\/forum\/\*  ;\
 	echo allow\ url\ http\:\/\/www\.archery\.su\/\*  ;\
+	echo allow\ url\ http\:\/\/fonts\.googleapis\.com\/\*  ;\
 	echo allow\ env\ SWAKS  ;\
 	echo allow\ env\ PASS  ;\
 	echo library\ \.\/lib\/urweb\-monad\-pack\/  ;\

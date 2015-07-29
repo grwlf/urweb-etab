@@ -27,6 +27,7 @@ bits = rule $ do
   allow url "https://github.com/grwlf/urweb-etab*"
   allow url "http://www.bowmania.ru/forum/*"
   allow url "http://www.archery.su/*"
+  allow url "http://fonts.googleapis.com/*"
   allow env "SWAKS"
   allow env "PASS"
   library MonadPack.lib

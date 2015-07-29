@@ -42,13 +42,18 @@ style bg_3d
 style bg_tournament
 style bg_open
 
+style icon_bar
 
 style wide
+style brand
 
 val srcprj = bless "https://github.com/grwlf/urweb-etab"
 
 val donate = Unsafe.s2xbody
   "<iframe frameborder='0' allowtransparency='true' scrolling='no' src='https://money.yandex.ru/embed/donate.xml?account=41001443664241&quickpay=donate&payment-type-choice=off&default-sum=100&targets=%D0%9F%D0%BE%D0%B4%D0%B4%D0%B5%D1%80%D0%B6%D0%BA%D0%B0+%D0%BF%D1%80%D0%BE%D0%B5%D0%BA%D1%82%D0%B0&target-visibility=on&project-name=ArcheryDays.ru&project-site=ArcheryDays.ru&button-text=05&successURL=ArcheryDays.ru' width='512' height='132'></iframe>"
+
+(* To avoid clashes with 'nav' css_class *)
+val nav_ = @@NavTag.nav
 
 fun template_ w links mb : transaction page =
   let
@@ -61,16 +66,50 @@ fun template_ w links mb : transaction page =
   <xml>
     <title>Календарный план соревнований</title>
     <link rel="icon" type="image/x-icon" href={Etab_ico.geturl}/>
+    <link href="http://fonts.googleapis.com/css?family=Lobster&subset=latin,cyrillic" rel="stylesheet" type="text/css"/>
     {Analytics.insert "UA-55678474-3"}
   </xml> (
   Uru.withBody (fn _ =>
     b <- XMLW.run mb;
     x <- fresh;
+    n <- fresh;
     return
     <xml>
-      <header class="wide">
-      (* <h1>Hello, UrWeb!</h1> *)
-      </header>
+
+      <nav_ class="navbar navbar-default navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <a class="brand navbar-brand" href={links.Main}>Лучный День</a>
+        </div>
+        <div id={n} class="navbar-collapse collapse">
+          <ul class="nav navbar-nav">
+            <li><a href={links.Main}>Сообщить о соревновании</a></li>
+            <li class="dropdown">
+              <a href={links.Main} class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+                Действия<span class="caret"></span>
+              </a>
+              <ul class="dropdown-menu">
+                <li><a href={links.Main}>Action</a></li>
+                <li><a href={links.Main}>Another action</a></li>
+                <li><a href={links.Main}>Something else here</a></li>
+                <li role="separator" class="divider"></li>
+                <li class="dropdown-header">Nav header</li>
+                <li><a href={links.Main}>Separated link</a></li>
+                <li><a href={links.Main}>One more separated link</a></li>
+              </ul>
+            </li>
+          </ul>
+          <ul class="nav navbar-nav navbar-right">
+            <li><a href={links.Main}>О проекте</a></li>
+            <li><a href={links.Main}>Обратная связь</a></li>
+          </ul>
+        </div><!--/.nav-collapse -->
+      </div>
+      </nav_>
+
+      {nar.Header wide
+      <xml>
+      </xml>}
 
       {nar.Container
       <xml>
@@ -531,7 +570,7 @@ and contact_us {} =
 
     and contact_us_ err f : transaction page =
 
-      template (links {}) (
+      template_narrow (links {}) (
 
         cid <- XMLW.lift (Captcha.allocate {});
 
@@ -692,8 +731,7 @@ and main_ o : transaction page =
     in
 
     pb <xml>
-    <h1>
-      Календарный план соревнований по стрельбе из лука на {[year]} год</h1>
+      <h1>Календарный план соревнований по стрельбе из лука на {[year]} год</h1>
     </xml>;
 
     pb (
