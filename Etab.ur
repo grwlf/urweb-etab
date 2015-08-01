@@ -208,10 +208,6 @@ fun city_tournament_3D e : transaction int =
     Country = serialize Russia,
     Kind = serialize (CityTournament All)})
 
-fun mkDate d m y = fromDatetime y (m-1) d 12 0 0
-fun mkDate' d m y = fromDatetime y (Datetime.monthToInt m) d 12 0 0
-fun mkDate15 d m = mkDate d m 2015
-
 task initialize = fn _ =>
   (* Check env *)
   _ <- Email.env {};
@@ -432,6 +428,7 @@ task initialize = fn _ =>
 
 *)
 
+(*{{{ Utils *)
 val pb = @@XMLW.push_back_xml
 fun xt m = XMLW.push_back (XMLW.nest (fn x=><xml><table class="bs3-table table-striped">{x}</table></xml>) m)
 fun xtrow m = XMLW.push_back (XMLW.nest (fn x=><xml><tr>{x}</tr></xml>) m)
@@ -530,7 +527,9 @@ fun details e : transaction xbody =
       </xml>
   }
   end
+(*}}}*)
 
+(*{{{ Links*)
 fun links {} = {
       Main = url (main {}),
       Bottom =
@@ -538,6 +537,7 @@ fun links {} = {
         <xml><a href={url (contact_us {})}>Обратная связь</a></xml> ::
         []
     }
+(*}}}*)
 
 (*{{{ Contact us *)
 and contact_us {} = 
