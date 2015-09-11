@@ -11,13 +11,23 @@ import qualified Cake_Captcha as Captcha hiding(main)
 import qualified Cake_Callback as Callback hiding(main)
 import Cake_Etab_P
 
-bits = rule $ do
-  let bits_c = file "lib/urweb-aatree/lib/lib_bits/src/c/Bits.c"
-  let bits_o = bits_c .= "o"
+aatree_urp = file "lib/urweb-aatree/lib_aatree.urp"
+bits_c = file "lib/urweb-aatree/lib/lib_bits/src/c/Bits.c"
+bits_o = bits_c .= ".o"
+
+check_aatree_urp = rule $ do
+  shell [cmd| git -C $(cwd) submodule update --init lib/urweb-aatree |]
+  shell [cmd| git -C $(cwd)/lib/urweb-aatree checkout -f |]
+  shell [cmd| touch -c @(aatree_urp)|]
+
+check_bits_o = rule $ do
+  depend check_aatree_urp
+  shell [cmd|echo '*.o' > $(cwd)/lib/urweb-aatree/.gitignore |]
+  shell [cmd|echo '.*' >> $(cwd)/lib/urweb-aatree/.gitignore |]
   shell [cmd|C_INCLUDE_PATH=$(uwincludedir) $(uwcc) -c -o @(bits_o) $(bits_c)|]
 
 (app,db) = uwapp_postgres (file "Etab.urp") $ do
-  depend bits
+  depend check_bits_o
   allow mime "text/javascript";
   allow mime "text/css";
   allow mime "image/jpeg";
@@ -39,6 +49,7 @@ bits = rule $ do
   library Callback.lib
   library (file "lib/urweb-aatree/lib_aatree.urp")
   safeGet "Etab/register_user"
+  safeGet "Etab/report_comp"
   safeGet "Etab/contact_us"
   embed (file "Etab.css")
   embed (file "Etab.ico")

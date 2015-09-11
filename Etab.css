@@ -32,3 +32,44 @@ div.tooltip-inner {
   font-family: 'Lobster', cursive;
   font-size: xx-large;
 }
+
+.Etab_addbutton {
+}
+
+.Etab_addlabel {
+  margin-top:20px
+}
+
+.Etab_strike {
+    display: block;
+    text-align: center;
+    overflow: hidden;
+    white-space: nowrap; 
+}
+
+.Etab_strike > span {
+    position: relative;
+    display: inline-block;
+}
+
+.Etab_strike > span:before,
+.Etab_strike > span:after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    width: 9999px;
+    height: 1px;
+    background: red;
+}
+
+.Etab_strike > span:before {
+    right: 100%;
+    margin-right: 15px;
+}
+
+.Etab_strike > span:after {
+    left: 100%;
+    margin-left: 15px;
+}
+
+

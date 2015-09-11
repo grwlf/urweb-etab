@@ -23,7 +23,7 @@ fun ifor [s:::Type] (f: int -> s -> s) (fst:int) (lst:int) (s:s) : s =
     s
 
 fun iwhile [s:::Type] (f: s -> (s * bool)) (s:s) : s =
-  let 
+  let
     val (s', ex) = f s
   in
     if ex then s' else iwhile f s'
@@ -47,6 +47,10 @@ style icon_bar
 style wide
 style brand
 
+style addbutton
+style addlabel
+style strike
+
 val srcprj = bless "https://github.com/grwlf/urweb-etab"
 
 val donate = Unsafe.s2xbody
@@ -54,6 +58,8 @@ val donate = Unsafe.s2xbody
 
 (* To avoid clashes with 'nav' css_class *)
 val nav_ = @@NavTag.nav
+(* Re-introducing Basis.hidden from tag *)
+val hidden = @@Basis.hidden
 
 fun template_ w links mb : transaction page =
   let
@@ -77,13 +83,13 @@ fun template_ w links mb : transaction page =
     <xml>
 
       <nav_ class="navbar navbar-default navbar-fixed-top">
-      <div class="container">
+      <div class="container" style={oneProperty (STYLE "") (value (property "max-width") (atom ((show w) ^ "px")))}>
         <div class="navbar-header">
-          <a class="brand navbar-brand" href={links.Main}>Лучный День</a>
+          <a class="brand navbar-brand" href={links.Main}>AD.RU</a>
         </div>
         <div id={n} class="navbar-collapse collapse">
           <ul class="nav navbar-nav">
-            <li><a href={links.Main}>Сообщить о соревновании</a></li>
+            <li><a href={links.Report}>Сообщить о соревновании</a></li>
             <li class="dropdown">
               <a href={links.Main} class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
                 Действия<span class="caret"></span>
@@ -527,10 +533,35 @@ fun details e : transaction xbody =
       </xml>
   }
   end
+
+fun capform [x:::{Type}] [x ~ [Capcheck=string,CapId=string]] {} : transaction (
+  xml ([Body = (), Dyn = (), Form = ()]) x ([Capcheck = string, CapId = string])) =
+  cid <- Captcha.allocate {};
+  return
+  <xml>
+    <div class="form-group">
+      <div class="col-sm-2"/>
+      <div class="col-sm-4">
+        <img src={url (Captcha.blob cid)} alt="captcha"/>
+      </div>
+      <div class="col-sm-6"/>
+    </div>
+
+    <div class="form-group">
+      <label class="col-sm-2 control-label">Слово с картинки</label>
+      <div class="col-sm-4">
+        <textbox{#Capcheck} class="form-control" placeholder="Строчные латинские буквы"/><br/>
+      </div>
+      <div class="col-sm-6"/>
+    </div>
+    <hidden{#CapId}/>
+  </xml>
+
 (*}}}*)
 
 (*{{{ Links*)
 fun links {} = {
+      Report = url (report_comp {}),
       Main = url (main {}),
       Bottom =
         (* <xml><a href={url (register_user {})}>Зарегистрироваться</a></xml> :: *)
@@ -539,10 +570,143 @@ fun links {} = {
     }
 (*}}}*)
 
+(*{{{ Report competition *)
+and report_comp {} = 
+  let
+    report_comp_ "" {Email="", Capcheck="", CapId="", Message="", Message2=""}
+  where
+
+    fun render_result (b:xbody) = 
+      template_narrow (links {}) (
+        pb <xml>
+          {b}
+        </xml>;
+        return {}
+      )
+
+    fun report_handler f : transaction page =
+      capt_ok <- Captcha.check_free f.Capcheck (readError f.CapId);
+      e <- E.run (
+        Prelude.when (f.Message = "") (E.fail "Сообщение не должно быть пустым");
+        Prelude.when (f.Message2 = "") (E.fail "Сообщение не должно быть пустым");
+        Prelude.when ((strlen f.Message) > 1024) (E.fail "Сообщение слишком длинное");
+        Prelude.when (f.Email = "") (E.fail "Укажите адрес Вашей электронной почты");
+        Prelude.when (not capt_ok) (E.fail "Текст не совпадает с картинкой");
+        return {}
+      );
+      case e of
+        | Error.ERight {} =>
+            b <- Email.send "ierton@gmail.com" f.Email ("Etab message from " ^ f.Email) f.Message;
+            render_result b
+        | Error.ELeft e => report_comp_ e f
+
+    and report_comp_ err f : transaction page =
+
+      template_narrow (links {}) (
+
+        (* cap <- XMLW.lift (capform {}); *)
+
+        let
+          fun sect cls x = <xml><div class="row"><div class="col-sm-12"><div class={cls}>{x}</div></div></div></xml>
+        in
+
+        pb <xml>
+        <div class="row">
+          <div class="col-sm-12">
+          <h1>Сообщить о соревновании</h1>
+         </div> 
+        </div>
+        <div class="row" style="text-align:center">
+          <div class="col-sm-4">
+            {sect addbutton <xml>
+            <a class="btn btn-lg btn-primary btn-block" link={main {}}>Указать ссылку</a>
+            </xml>}
+            {sect addlabel <xml>
+              <p class="text-muted">Указать ссылку на тему форума или электронный документ с "Вызовом"</p>
+            </xml>}
+          </div>
+          <div class="col-sm-4">
+            {sect addbutton <xml>
+              <a class="btn btn-lg btn-primary btn-block" link={main {}}>Загрузить документ</a>
+            </xml>}
+            {sect addlabel <xml>
+              <span class="text-muted">Загрузить электронный документ (Word, PDF), содержащий "Вызов"</span>
+            </xml>}
+          </div>
+          <div class="col-sm-4">
+            {sect addbutton <xml>
+              <a class="btn btn-lg btn-primary btn-block" link={main {}}>Заполнить форму</a>
+            </xml>}
+            {sect addlabel <xml>
+              <span class="text-muted">Заполнить форму, указав дату начала и окончания соревнования, текст вызова</span>
+            </xml>}
+          </div>
+        </div>
+
+        (* xxxxxx *)
+        (* <div class="strike"> *)
+        (*    <span>Kringle</span> *)
+        (* </div> *)
+        (* aaaaaaa *)
+
+        </xml>
+        
+        end;
+
+        (* pb <xml> *)
+        (*   <h1>Сообщить о соревновании</h1> *)
+        (*   {if err <> "" then *)
+        (*   <xml><div class="alert alert-danger"> *)
+        (*     <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span> *)
+        (*     <span class="sr-only">Ошибка:</span> *)
+        (*     {[err]} *)
+        (*   </div></xml> else <xml/>} *)
+
+        (*   <form class={form_horizontal} style="text-align:left"> *)
+        (*     <div class="form-group"> *)
+        (*       <label class="col-sm-2 control-label">Эл.почта отправителя</label> *)
+        (*       <div class="col-sm-10"> *)
+        (*         <email{#Email} class="form-control" placeholder="Email" value={f.Email}/> *)
+        (*       </div> *)
+        (*     </div> *)
+
+        (*     <div class="form-group"> *)
+        (*       <label class="col-sm-2 control-label">Текст сообщения</label> *)
+        (*       <div class="col-sm-10"> *)
+        (*         <textarea{#Message} class="form-control">{cdata f.Message}</textarea> *)
+        (*       </div> *)
+        (*     </div> *)
+
+        (*     <div class="form-group"> *)
+        (*       <label class="col-sm-2 control-label">Текст сообщения</label> *)
+        (*       <div class="col-sm-10"> *)
+        (*         <textarea{#Message2} class="form-control">{cdata f.Message2}</textarea> *)
+        (*       </div> *)
+        (*     </div> *)
+
+        (*     {cap} *)
+
+        (*     <div class="form-group"> *)
+        (*       <div class="col-sm-2"/> *)
+        (*       <div class="col-sm-10"> *)
+        (*       <submit action={report_handler} class="btn btn-default" value="Отправить"/> *)
+        (*       </div> *)
+        (*     </div> *)
+
+        (*   </form> *)
+
+        (* </xml>; *)
+
+        return {}
+      )
+
+  end
+(*}}}*)
+
 (*{{{ Contact us *)
 and contact_us {} = 
   let
-    contact_us_ "" {Email="", Capcheck="", Message=""}
+    contact_us_ "" {Email="", Capcheck="", CapId="", Message=""}
   where
     fun render_result (b:xbody) = 
       template (links {}) (
@@ -552,8 +716,8 @@ and contact_us {} =
         return {}
       )
 
-    fun contact_handler (cid:int) (f:{Email: string, Capcheck:string, Message:string}) : transaction page =
-      capt_ok <- Captcha.check_free f.Capcheck cid;
+    fun contact_handler (f:{Email:string, Capcheck:string, CapId:string, Message:string}) : transaction page =
+      capt_ok <- Captcha.check_free f.Capcheck (readError f.CapId);
       e <- E.run (
         Prelude.when (f.Message = "") (E.fail "Сообщение не должно быть пустым");
         Prelude.when ((strlen f.Message) > 1024) (E.fail "Сообщение слишком длинное");
@@ -572,7 +736,7 @@ and contact_us {} =
 
       template_narrow (links {}) (
 
-        cid <- XMLW.lift (Captcha.allocate {});
+        cap <- XMLW.lift (capform {});
 
         pb <xml>
           <h1>Обратная связь</h1>
@@ -598,26 +762,12 @@ and contact_us {} =
               </div>
             </div>
 
-            <div class="form-group">
-              <div class="col-sm-2"/>
-              <div class="col-sm-4">
-                <img src={url (Captcha.blob cid)} alt="captcha"/>
-              </div>
-              <div class="col-sm-6"/>
-            </div>
-
-            <div class="form-group">
-              <label class="col-sm-2 control-label">Слово с картинки</label>
-              <div class="col-sm-4">
-                <textbox{#Capcheck} class="form-control" placeholder="Строчные латинские буквы"/><br/>
-              </div>
-              <div class="col-sm-6"/>
-            </div>
+            {cap}
 
             <div class="form-group">
               <div class="col-sm-2"/>
               <div class="col-sm-10">
-              <submit action={contact_handler cid} class="btn btn-default" value="Отправить"/>
+              <submit action={contact_handler} class="btn btn-default" value="Отправить"/>
               </div>
             </div>
 
@@ -631,6 +781,7 @@ and contact_us {} =
   end
 (*}}}*)
   
+  (*
 (*{{{ Register user *)
 and register_user {} = 
   let
@@ -717,6 +868,7 @@ and register_user {} =
       )
       end
   end(*}}}*)
+*)
 
 (*{{{ Main *)
 and main_ o : transaction page =
