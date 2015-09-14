@@ -153,7 +153,7 @@ table events : _event
 sequence events_gen
 
 fun event_insert_ s e' : transaction int =
-  let 
+  let
     val e : record event_details = e' ++ { Sport = serialize s }
   in
   i <- nextval events_gen;
@@ -202,6 +202,11 @@ fun city_competition e : transaction int =
   event_insert (e ++ {
     Country = serialize Russia,
     Kind = serialize CityCompetition})
+
+fun club_competition e : transaction int =
+  event_insert (e ++ {
+    Country = serialize Russia,
+    Kind = serialize ClubCompetition})
 
 fun city_tournament e : transaction int =
   event_insert (e ++ {
@@ -333,10 +338,10 @@ task initialize = fn _ =>
          , City = serialize Taganrog };
 
   _ <- state_cup {
-           Start = mkDate15 24 09
-         , Stop =  mkDate15 29 09
+           Start = mkDate15 03 10
+         , Stop =  mkDate15 08 10
          , Caption = "Кубок России"
-         , City = serialize Unknown };
+         , City = serialize Taganrog };
 
   _ <- state_cup {
            Start = mkDate15 03 12
@@ -363,6 +368,15 @@ task initialize = fn _ =>
          , Caption = "Чемпионат Воронежа"
          , City = serialize Voronezh
          , Description = ""};
+
+  (* Club *)
+
+  _ <- club_competition
+         { Start = mkDate15 25 09
+         , Stop =  mkDate15 26 09
+         , Caption = "Соревнования в Хантере"
+         , City = serialize Moscow
+         , Description = "Соревнования в Хантере"};
 
   (* 3D *)
   _ <- city_tournament_3D
@@ -780,10 +794,10 @@ and contact_us {} =
 
   end
 (*}}}*)
-  
-  (*
+
+(*
 (*{{{ Register user *)
-and register_user {} = 
+and register_user {} =
   let
     register_user_ "" {UName="", Email="", Password="", Password2="", Capcheck=""}
   where
@@ -867,7 +881,8 @@ and register_user {} =
         return {}
       )
       end
-  end(*}}}*)
+  end
+  (*}}}*)
 *)
 
 (*{{{ Main *)
@@ -962,6 +977,7 @@ and main_ o : transaction page =
                                         |(ZoneCompetition,_) => bg_open
                                         |(CityCompetition,_) => bg_open
                                         |(CityTournament _,_) => bg_tournament
+                                        |(ClubCompetition,_) => bg_open
                                     }
                                     data-container="body"
                                 >

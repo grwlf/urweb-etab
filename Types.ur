@@ -14,7 +14,7 @@ datatype lang = Ru
 datatype age = Youth | Adult | All
 
 datatype eventkind = StateTournament of age | StateCup | StateCompetition | ZoneCompetition
-                     | CityCompetition | CityTournament of age
+                   | CityCompetition | CityTournament of age | ClubCompetition
 
 datatype sport = A3D | Target | Field
 
@@ -36,6 +36,7 @@ fun kindName_ru (e:eventkind) : (string*string) =
     |CityTournament Adult => ("ГЧ", "Чемпионат города")
     |CityTournament Youth => ("ГП", "Первенство города")
     |CityTournament All => ("ГЧ", "Чемпионат города")
+    |ClubCompetition => ("КС", "Клубные соревнования")
 
 
 datatype country = Russia | Bulgaia | OtherCountry of string
