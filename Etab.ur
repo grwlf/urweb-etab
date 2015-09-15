@@ -568,7 +568,8 @@ fun capform [x:::{Type}] [x ~ [Capcheck=string,CapId=string]] {} : transaction (
       </div>
       <div class="col-sm-6"/>
     </div>
-    <hidden{#CapId}/>
+    <hidden{#CapId} value={show cid}/>
+
   </xml>
 
 (*}}}*)
@@ -590,14 +591,6 @@ and report_comp {} =
     report_comp_ "" {Email="", Capcheck="", CapId="", Message="", Message2=""}
   where
 
-    fun render_result (b:xbody) = 
-      template_narrow (links {}) (
-        pb <xml>
-          {b}
-        </xml>;
-        return {}
-      )
-
     fun report_handler f : transaction page =
       capt_ok <- Captcha.check_free f.Capcheck (readError f.CapId);
       e <- E.run (
@@ -611,7 +604,7 @@ and report_comp {} =
       case e of
         | Error.ERight {} =>
             b <- Email.send "ierton@gmail.com" f.Email ("Etab message from " ^ f.Email) f.Message;
-            render_result b
+            sent_message_report b
         | Error.ELeft e => report_comp_ e f
 
     and report_comp_ err f : transaction page =
@@ -717,18 +710,22 @@ and report_comp {} =
   end
 (*}}}*)
 
+and sent_message_report (b:xbody) = 
+  template_narrow (links {}) (
+    pb <xml>
+      <div style="text-align:center">
+        <p>{b}</p>
+        <p><a link={main {}}>На главную</a></p>
+      </div>
+    </xml>;
+    return {}
+  )
+
 (*{{{ Contact us *)
 and contact_us {} = 
   let
     contact_us_ "" {Email="", Capcheck="", CapId="", Message=""}
   where
-    fun render_result (b:xbody) = 
-      template (links {}) (
-        pb <xml>
-          {b}
-        </xml>;
-        return {}
-      )
 
     fun contact_handler (f:{Email:string, Capcheck:string, CapId:string, Message:string}) : transaction page =
       capt_ok <- Captcha.check_free f.Capcheck (readError f.CapId);
@@ -743,7 +740,7 @@ and contact_us {} =
       case e of
         | Error.ERight {} =>
             b <- Email.send "ierton@gmail.com" f.Email ("Etab message from " ^ f.Email) f.Message;
-            render_result b
+            sent_message_report b
         | Error.ELeft e => contact_us_ e f
 
     and contact_us_ err f : transaction page =
