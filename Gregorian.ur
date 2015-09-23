@@ -46,5 +46,6 @@ fun monthGE (t:time) (n:time) : bool =
 fun mkDate d m y = fromDatetime y (m-1) d 12 0 0
 fun mkDate' d m y = fromDatetime y (Datetime.monthToInt m) d 12 0 0
 fun mkDate15 d m = mkDate d m 2015
+fun mkDate16 d m = mkDate d m 2016
 
 

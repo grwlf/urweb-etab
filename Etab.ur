@@ -82,36 +82,38 @@ fun template_ w links mb : transaction page =
     return
     <xml>
 
+      (*
       <nav_ class="navbar navbar-default navbar-fixed-top">
       <div class="container" style={oneProperty (STYLE "") (value (property "max-width") (atom ((show w) ^ "px")))}>
-        <div class="navbar-header">
-          <a class="brand navbar-brand" href={links.Main}>AD.RU</a>
-        </div>
+        (* <div class="navbar-header"> *)
+        (*   <a class="brand navbar-brand" href={links.Main}>AD.RU</a> *)
+        (* </div> *)
         <div id={n} class="navbar-collapse collapse">
           <ul class="nav navbar-nav">
-            <li><a href={links.Report}>Сообщить о соревновании</a></li>
-            <li class="dropdown">
-              <a href={links.Main} class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
-                Действия<span class="caret"></span>
-              </a>
-              <ul class="dropdown-menu">
-                <li><a href={links.Main}>Action</a></li>
-                <li><a href={links.Main}>Another action</a></li>
-                <li><a href={links.Main}>Something else here</a></li>
-                <li role="separator" class="divider"></li>
-                <li class="dropdown-header">Nav header</li>
-                <li><a href={links.Main}>Separated link</a></li>
-                <li><a href={links.Main}>One more separated link</a></li>
-              </ul>
-            </li>
+            (* <li><a href={links.Report}>Сообщить о соревновании</a></li> *)
+            (* <li class="dropdown"> *)
+            (*   <a href={links.Main} class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"> *)
+            (*     Действия<span class="caret"></span> *)
+            (*   </a> *)
+            (*   <ul class="dropdown-menu"> *)
+            (*     <li><a href={links.Main}>Action</a></li> *)
+            (*     <li><a href={links.Main}>Another action</a></li> *)
+            (*     <li><a href={links.Main}>Something else here</a></li> *)
+            (*     <li role="separator" class="divider"></li> *)
+            (*     <li class="dropdown-header">Nav header</li> *)
+            (*     <li><a href={links.Main}>Separated link</a></li> *)
+            (*     <li><a href={links.Main}>One more separated link</a></li> *)
+            (*   </ul> *)
+            (* </li> *)
           </ul>
           <ul class="nav navbar-nav navbar-right">
-            <li><a href={links.Main}>О проекте</a></li>
-            <li><a href={links.Main}>Обратная связь</a></li>
+            (* <li><a href={links.Main}>О проекте</a></li> *)
+            (* <li><a href={links.Main}>Обратная связь</a></li> *)
           </ul>
         </div><!--/.nav-collapse -->
       </div>
       </nav_>
+      *)
 
       {nar.Header wide
       <xml>
@@ -125,9 +127,9 @@ fun template_ w links mb : transaction page =
       {nar.Footer
       <xml>
         <hr/>
-        <p class="text-muted">
-          Сайт разработан с помощью <a href={bless "http://impredicative.com/ur/"}>Ur/Web</a>.
-        </p>
+        (* <p class="text-muted"> *)
+        (*   Сайт разработан с помощью <a href={bless "http://impredicative.com/ur/"}>Ur/Web</a>. *)
+        (* </p> *)
         <p class="text-muted">
         <ul style="padding-left: 0px; margin-top: 20px; color: #999;">
           {Soup.footer_doc_links ( links.Bottom  )}
@@ -369,14 +371,71 @@ task initialize = fn _ =>
          , City = serialize Voronezh
          , Description = ""};
 
+  _ <- city_competition
+         { Start = mkDate15 10 12
+         , Stop =  mkDate15 13 12
+         , Caption = "Кубок Москвы"
+         , City = serialize Moscow
+         , Description = "18  метров"};
+
   (* Club *)
 
   _ <- club_competition
-         { Start = mkDate15 25 09
+         { Start = mkDate15 26 09
          , Stop =  mkDate15 26 09
          , Caption = "Соревнования в Хантере"
          , City = serialize Moscow
          , Description = "Соревнования в Хантере"};
+
+  _ <- club_competition
+         { Start = mkDate15 10 10
+         , Stop =  mkDate15 10 10
+         , Caption = "Варяг"
+         , City = serialize Moscow
+         , Description = "Спорт в Варяе"};
+
+  _ <- club_competition
+         { Start = mkDate15 18 10
+         , Stop =  mkDate15 18 10
+         , Caption = "Варяг"
+         , City = serialize Moscow
+         , Description = "Традиция в Варяе"};
+
+  _ <- club_competition
+         { Start = mkDate15 24 10
+         , Stop =  mkDate15 24 10
+         , Caption = "Бункер"
+         , City = serialize Moscow
+         , Description = "Бункер"};
+
+
+  _ <- club_competition
+         { Start = mkDate15 10 10
+         , Stop =  mkDate15 10 10
+         , Caption = "Тверской"
+         , City = serialize Moscow
+         , Description = ""};
+
+  _ <- club_competition
+         { Start = mkDate15 07 11
+         , Stop =  mkDate15 07 11
+         , Caption = "Бункер 1"
+         , City = serialize Moscow
+         , Description = ""};
+
+  _ <- club_competition
+         { Start = mkDate15 28 11
+         , Stop =  mkDate15 28 11
+         , Caption = "Тверской 2"
+         , City = serialize Moscow
+         , Description = ""};
+
+  _ <- club_competition
+         { Start = mkDate15 05 12
+         , Stop =  mkDate15 05 12
+         , Caption = "Бункер 2"
+         , City = serialize Moscow
+         , Description = ""};
 
   (* 3D *)
   _ <- city_tournament_3D
@@ -434,6 +493,27 @@ task initialize = fn _ =>
          , Caption = "Уральская заимка, 4й этап"
          , City = serialize (Oblast Cheliabinsk)
          , Description = "http://www.bowmania.ru/forum/index.php?topic=11115.0" };
+
+  _ <- city_tournament_3D
+         { Start = mkDate15 17 10
+         , Stop =  mkDate15 17 10
+         , Caption = "4 Сезона"
+         , City = serialize Moscow
+         , Description = "" };
+
+
+  (*
+   ____   ___  _  __
+  |___ \ / _ \/ |/ /_
+    __) | | | | | '_ \
+   / __/| |_| | | (_) |
+  |_____|\___/|_|\___/
+
+  *)
+
+  (* Club *)
+
+
   (*}}}*)
 
   return {}
@@ -586,7 +666,7 @@ fun links {} = {
 (*}}}*)
 
 (*{{{ Report competition *)
-and report_comp {} = 
+and report_comp {} =
   let
     report_comp_ "" {Email="", Capcheck="", CapId="", Message="", Message2=""}
   where
@@ -621,7 +701,7 @@ and report_comp {} =
         <div class="row">
           <div class="col-sm-12">
           <h1>Сообщить о соревновании</h1>
-         </div> 
+         </div>
         </div>
         <div class="row" style="text-align:center">
           <div class="col-sm-4">
@@ -657,7 +737,7 @@ and report_comp {} =
         (* aaaaaaa *)
 
         </xml>
-        
+
         end;
 
         (* pb <xml> *)
@@ -710,7 +790,7 @@ and report_comp {} =
   end
 (*}}}*)
 
-and sent_message_report (b:xbody) = 
+and sent_message_report (b:xbody) =
   template_narrow (links {}) (
     pb <xml>
       <div style="text-align:center">
@@ -884,28 +964,44 @@ and register_user {} =
 
 (*{{{ Main *)
 and main_ o : transaction page =
-
+  let
+    val year = o.Year
+  in
   template (links {}) (
     now <- XMLW.lift Basis.now;
-    q <- XMLW.lift (queryL1 (SELECT * FROM events AS E ORDER BY E.Start DESC));
+    q <- XMLW.lift (queryL1 (SELECT * FROM events AS E WHERE
+      E.Start >= {[mkDate 1 1 year]} AND E.Stop < {[mkDate 1 1 (year+1)]} ORDER BY E.Start DESC));
     let
-      val year = 2015
       val ls = splitLayers q
       val nl = LMap.size ls
     in
+    pb (
+    <xml>
+    </xml>
+    );
 
     pb <xml>
+      <a href={url (main_ (o -- #Year ++ {Year=2015}))}                         >2015</a>
+      <a href={url (main_ (o -- #Year ++ {Year=2016}))} style="margin-left:30px">2016</a>
       <h1>Календарный план соревнований по стрельбе из лука на {[year]} год</h1>
     </xml>;
+
+    (*
+    pb (
+    <xml>
+      <a href={url (report_comp {})} style="margin-left:30px">Сообщить о соревновании</a>
+    </xml>
+    );
+    *)
 
     pb (
       if o.ShowPastMonths then
         <xml>
-          <a href={url (main_ {ShowPastMonths = False})}>Скрыть прошедшие месяцы</a>
+          <a href={url (main_ {ShowPastMonths=False, Year=o.Year})}>Скрыть прошедшие месяцы</a>
         </xml>
       else
         <xml>
-          <a href={url (main_ {ShowPastMonths = True})}>Показать прошедшие месяцы</a>
+          <a href={url (main_ {ShowPastMonths=True, Year=o.Year})}>Показать прошедшие месяцы</a>
         </xml>
     );
 
@@ -1013,8 +1109,9 @@ and main_ o : transaction page =
 
     return {}
   )
+  end
 
-and main {} = main_ {ShowPastMonths = False}
+and main {} = main_ {ShowPastMonths = False, Year = 2015}
 
 (*}}}*)
 
