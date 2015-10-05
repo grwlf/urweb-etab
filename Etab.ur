@@ -38,6 +38,7 @@ fun iwhile [s:::Type] (f: s -> (s * bool)) (s:s) : s =
                    |_|
 *)
 
+style bg_normal
 style bg_3d
 style bg_tournament
 style bg_open
@@ -533,39 +534,55 @@ val pb = @@XMLW.push_back_xml
 fun xt m = XMLW.push_back (XMLW.nest (fn x=><xml><table class="bs3-table table-striped">{x}</table></xml>) m)
 fun xtrow m = XMLW.push_back (XMLW.nest (fn x=><xml><tr>{x}</tr></xml>) m)
 
+type labeled_event = record (_event ++ [Label = bool])
+
 structure LMap = AATreeMap.MkAATreeMap (struct
   type key = int
-  type item = list event
+  type item = list labeled_event
 end)
 
-type lmap = LMap.t int (list event)
+type lmap = LMap.t int (list labeled_event)
 
 fun splitLayers (l: list event) : lmap =
   LMap.mapValues (fn x => List.rev x)
     (List.foldl (fn e m =>
       (iwhile (fn (i,m) =>
-        (case (LMap.lookup i m) of
-          |None => ((i,LMap.insert i (e::[]) m), True)
-          |Some [] =>
-            ((i,LMap.insert i (e::[]) m), True)
-          |Some (e'::es') =>
-            (if (addDays e'.Stop 3) < e.Start then
-                (* add the event to the current layer *)
-                ((i,LMap.insert i (e::e'::es') m), True)
-              else
-                (if (e'.Stop < e.Start) && (daysDiff e'.Start e'.Stop) > 3 then
+        let
+          fun add_event e es =
+            if daysDiff e.Start e.Stop  > 3 then
+                LMap.insert i ((e++{Label=False})::es) m
+            else
+                LMap.insert i (
+                  ((e -- #Start -- #Stop)++
+                    {Start=addDays e.Stop 1,
+                     Stop = addDays e.Stop 4,
+                     Label=True}
+                  ) :: (e++{Label=False})::es) m
+        in
+          (case (LMap.lookup i m) of
+            |None => ((i,add_event e []), True)
+            |Some [] => ((i,add_event e []), True)
+            |Some (e'::es') =>
+              (if e'.Stop  < e.Start then
                   (* add the event to the current layer *)
-                  ((i,LMap.insert i (e::e'::es') m), True)
-                 else
+                  ((i,add_event e (e'::es')), True)
+                else
                   (* move to the next layer *)
                   ((i+1,m), False)
-                )
-            )
-        )
+              )
+          )
+        end
       ) (0,m)).2
     ) LMap.empty l)
 
-fun getLayer i (m:lmap) : list event =
+fun filterMonth (m:month) (l:list labeled_event) : list labeled_event =
+    List.filter (fn e => (m >= (toMonth e.Start)) && (toMonth e.Stop) >= m) l
+
+fun splitMonths (l:list labeled_event) : list (list labeled_event) =
+  List.mp (fn m => filterMonth m l) months
+
+
+fun getLayer i (m:lmap) : list labeled_event =
   case (LMap.lookup i m) of |None => [] | Some x => x
 
 fun caption e : (string * string) =
@@ -1073,15 +1090,16 @@ and main_ o : transaction page =
                               <xml>
                                 <td colspan={min (daysDiff d eom) (daysDiff d e.Stop)}
                                     class={
-                                      case (deserialize e.Kind, deserialize e.Sport) of
-                                        |(_,A3D) =>bg_3d
-                                        |(StateTournament _,_) => bg_tournament
-                                        |(StateCup,_) => bg_open
-                                        |(StateCompetition,_) => bg_open
-                                        |(ZoneCompetition,_) => bg_open
-                                        |(CityCompetition,_) => bg_open
-                                        |(CityTournament _,_) => bg_tournament
-                                        |(ClubCompetition,_) => bg_open
+                                      case (e.Label, deserialize e.Kind, deserialize e.Sport) of
+                                        |(True,_,_) =>bg_normal
+                                        |(_,_,A3D) =>bg_3d
+                                        |(_,StateTournament _,_) => bg_tournament
+                                        |(_,StateCup,_) => bg_open
+                                        |(_,StateCompetition,_) => bg_open
+                                        |(_,ZoneCompetition,_) => bg_open
+                                        |(_,CityCompetition,_) => bg_open
+                                        |(_,CityTournament _,_) => bg_tournament
+                                        |(_,ClubCompetition,_) => bg_open
                                     }
                                     data-container="body"
                                 >

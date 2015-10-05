@@ -88,9 +88,3 @@ fun eventSport [t] [t~[Sport]] (e : record (t ++ [Sport = serialized sport])) : 
 con _event = [ Id = int ] ++ event_details
 con event = record _event
 
-fun filterMonth (m:month)  (l:list event) : list event =
-    List.filter (fn e => (m >= (toMonth e.Start)) && (toMonth e.Stop) >= m) l
-
-fun splitMonths (l:list event) : list (list event) =
-  List.mp (fn m => filterMonth m l) months
-
