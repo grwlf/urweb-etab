@@ -32,6 +32,9 @@ fun toMonth t = (fromTime t).Month
 
 fun daysDiff t1 t2 = (((toSeconds t2) - (toSeconds t1)) / (60 * 60 * 24)) + 1
 
+fun addDays (t:time) (n:int) : time =
+  Basis.addSeconds t (n*60*60*24)
+
 fun sameDay (t:time) (n:time) : bool =
   ((datetimeYear t) = (datetimeYear n) &&
   (datetimeMonth t) = (datetimeMonth n) &&

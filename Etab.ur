@@ -549,10 +549,17 @@ fun splitLayers (l: list event) : lmap =
           |Some [] =>
             ((i,LMap.insert i (e::[]) m), True)
           |Some (e'::es') =>
-            (if e'.Stop < e.Start then
+            (if (addDays e'.Stop 3) < e.Start then
+                (* add the event to the current layer *)
                 ((i,LMap.insert i (e::e'::es') m), True)
               else
-                ((i+1,m), False)
+                (if (e'.Stop < e.Start) && (daysDiff e'.Start e'.Stop) > 3 then
+                  (* add the event to the current layer *)
+                  ((i,LMap.insert i (e::e'::es') m), True)
+                 else
+                  (* move to the next layer *)
+                  ((i+1,m), False)
+                )
             )
         )
       ) (0,m)).2
@@ -561,7 +568,7 @@ fun splitLayers (l: list event) : lmap =
 fun getLayer i (m:lmap) : list event =
   case (LMap.lookup i m) of |None => [] | Some x => x
 
-fun caption e : (string * string) = 
+fun caption e : (string * string) =
   let
     val (abbr,k) = (kindName_ru (eventKind e))
     val s = eventSport e
@@ -607,12 +614,12 @@ fun details e : transaction xbody =
     val (abbr,name) = caption e
     val city = cityName_ru (eventCity e)
   in
-  i <- fresh ; 
+  i <- fresh ;
   Soup.modal {
     Title=<xml><h3>{[name]}</h3></xml>
       , Body = <xml>{unwords_url e.Description}</xml>
       , Footer = <xml></xml>
-      , Placeholder = 
+      , Placeholder =
       <xml>
         <div
           data-html="true"
@@ -1020,6 +1027,7 @@ and main_ o : transaction page =
             </td></tr>
           </xml>;
 
+          (* Day-of-month header, showing weekands and the current day *)
           xtrow (
             forM_ (sequence_ 1 31) (fn i =>
             let
@@ -1039,6 +1047,7 @@ and main_ o : transaction page =
             )
           );
 
+          (* Render each layer of events one by one *)
           forM_ (sequence_ 0 (nl-1)) (fn i =>
             let
               val l = filterMonth m (getLayer i ls)
@@ -1054,10 +1063,12 @@ and main_ o : transaction page =
                     case es of
                       |e::es => (
                         if d >= e.Start then
+
                           (if d = e.Start || d = som then
                             let
                             in
                               m <- XMLW.lift (details e);
+                              (* render the event cells *)
                               pb
                               <xml>
                                 <td colspan={min (daysDiff d eom) (daysDiff d e.Stop)}
@@ -1080,15 +1091,20 @@ and main_ o : transaction page =
                             end
                           else
                             return {});
+
                           (if d = e.Stop then
+                            (* last event cell *)
                             return es
                           else
+                            (* first event cell *)
                             return (e::es))
                         else
+                          (* pre-start for some event *)
                           pb <xml><td style={border}>&nbsp;</td></xml>;
                           return (e::es)
                         )
                       |[]=> (
+                        (* no events to render *)
                         pb <xml><td style={border}>&nbsp;</td></xml>;
                         return [])
                   else
