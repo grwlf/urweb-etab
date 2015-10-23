@@ -72,9 +72,9 @@ UWVER = $(shell $(URWEB) -version)
 ./lib/urweb-aatree/.gitignore: ./.fix-multy2
 ./lib/urweb-aatree/lib/lib_bits/src/c/Bits.c: ./Makefile ./lib/urweb-aatree/.git
 	touch -c ./lib/urweb-aatree/lib/lib_bits/src/c/Bits.c
-./lib/urweb-aatree/.git: ./Makefile ./lib/urweb-aatree/
-	git -C ./lib/urweb-aatree/ submodule update --init
-	git -C ./lib/urweb-aatree/ checkout -f
+./lib/urweb-aatree/.git: ./Makefile
+	git -C ./lib submodule update --init urweb-aatree
+	git -C ./lib/urweb-aatree checkout -f
 	touch -c ./lib/urweb-aatree/.git
 ./.cake3/tmp___lib_urweb_callback_lib_in_2: ./Makefile ./lib/urweb-callback/Callback.ur ./lib/urweb-callback/Callback.urs ./lib/urweb-callback/CallbackFFI.h ./lib/urweb-callback/CallbackFFI.o ./lib/urweb-callback/CallbackNotify.ur ./lib/urweb-callback/CallbackNotify.urs ./lib/urweb-callback/CallbackNotify2.ur ./lib/urweb-callback/CallbackNotify2.urs
 	( \
