@@ -324,7 +324,7 @@ UWVER = $(shell $(URWEB) -version)
 ./.fix-multy9: ./Makefile.dev ./lib/uru3/Bootstrap/dist/css/bootstrap-theme.css
 	mkdir -p ./lib/uru3/Bootstrap/autogen 2>/dev/null
 	urembed  -c ./lib/uru3/Bootstrap/autogen/bootstrap_theme_css_c.c -H ./lib/uru3/Bootstrap/autogen/bootstrap_theme_css_c.h -s ./lib/uru3/Bootstrap/autogen/bootstrap_theme_css_c.urs -w ./lib/uru3/Bootstrap/autogen/bootstrap_theme_css.ur  ./lib/uru3/Bootstrap/dist/css/bootstrap-theme.css > ./lib/uru3/Bootstrap/autogen/bootstrap_theme_css.urp.in
-./Cakegen: ./Cake_Etab.hs ./lib/uru3/Bootstrap/Cake_Bootstrap.hs ./lib/uru3/BootstrapMisc/Cake_BootstrapMisc.hs ./lib/uru3/Dialog/Cake_Dialog.hs ./lib/uru3/JQuery/Cake_JQ.hs ./lib/uru3/Persona/Cake_Persona.hs ./lib/uru3/Uru/Cake_URU.hs ./lib/urweb-callback/Cake_Callback.hs ./lib/urweb-captcha/Cake_Captcha.hs ./lib/urweb-monad-pack/Cake_MonadPack.hs ./lib/urweb-prelude/Cake_Prelude.hs ./lib/urweb-soup/Cake_Soup.hs ./lib/urweb-xmlw/Cake_XMLW.hs
+./Cakegen: ./Cake_Etab.hs ./lib/uru3/Bootstrap/Cake_Bootstrap.hs ./lib/uru3/BootstrapMisc/Cake_BootstrapMisc.hs ./lib/uru3/Dialog/Cake_Dialog.hs ./lib/uru3/JQuery/Cake_JQ.hs ./lib/uru3/Persona/Cake_Persona.hs ./lib/uru3/RespTabs/Cake_RespTabs.hs ./lib/uru3/Uru/Cake_URU.hs ./lib/urweb-callback/Cake_Callback.hs ./lib/urweb-captcha/Cake_Captcha.hs ./lib/urweb-monad-pack/Cake_MonadPack.hs ./lib/urweb-prelude/Cake_Prelude.hs ./lib/urweb-soup/Cake_Soup.hs ./lib/urweb-xmlw/Cake_XMLW.hs
 	cake3
 ./Etab.exe: ./.fix-multy1
 ./Etab.sql: ./.fix-multy1
